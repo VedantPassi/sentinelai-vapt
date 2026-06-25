@@ -37,6 +37,7 @@
 | JWT auth endpoints (register, login, refresh) | ✅ | Live tested — register + login return JWT |
 | Target management API (CRUD) | ✅ | All 5 endpoints live tested |
 | Domain verification flow | ✅ | DNS TXT record check (_sentinelai-verify) |
+| pytest: auth + target CRUD tests | ✅ | 12/12 passing |
 | Next.js: auth pages (login/register) | ⬜ | |
 | Next.js: dashboard shell + nav | ⬜ | |
 | Next.js: target list + add target form | ⬜ | |

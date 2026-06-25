@@ -24,7 +24,7 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 2. Work only on tasks in the current phase — do not jump ahead
 3. Read this file first, every single session
 4. Update this file at the end of every session
-5. At phase completion, generate `phase-reports/phase-N-report.md`
+5. At phase completion, generate `IMP info/reports/phase-N-audit.md`
 6. Keep `PHASES.md` updated as your task board
 
 ---
@@ -55,7 +55,7 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 | Phase | Name | Status |
 |-------|------|--------|
 | 0 | Project Scaffold | ✅ Complete |
-| 1 | Core Platform Foundation | 🔵 In Progress |
+| 1 | Core Platform Foundation | 🔵 In Progress — backend done, frontend remaining |
 | 2 | Scanning Engine Core | ⬜ Not Started |
 | 3 | AI Agent Framework | ⬜ Not Started |
 | 4 | Validation & Risk Scoring | ⬜ Not Started |
@@ -64,99 +64,6 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 | 7 | Enterprise Features | ⬜ Not Started |
 
 **Current Phase: 1**
-
----
-
-## Phase 0 — Project Scaffold (Tasks)
-
-> Goal: Create the entire folder structure, base configs, Docker dev stack, and all scaffolding so Phase 1 can start building immediately.
-
-### Tasks
-- [ ] Create full folder structure per spec below
-- [ ] Initialize Python backend with `pyproject.toml` (uv or pip), FastAPI skeleton, health check endpoint
-- [ ] Initialize Next.js 15 frontend with TypeScript, Tailwind, shadcn/ui
-- [ ] Create `docker-compose.yml` with: postgres, redis, (kafka optional for phase 0)
-- [ ] Create `.env.example` with all required env var keys (no values)
-- [ ] Create `PHASES.md` task board
-- [ ] Create `docs/architecture.md` with high-level system design
-- [ ] Create `docs/adr/` folder for Architecture Decision Records
-- [ ] Write `ADR-001-tech-stack.md` documenting stack decisions and rationale
-- [ ] Verify: `docker-compose up` brings postgres + redis healthy
-- [ ] Verify: backend `uvicorn` starts, `/health` returns 200
-- [ ] Verify: frontend `npm run dev` starts without errors
-- [ ] Generate `phase-reports/phase-0-report.md`
-
-### Folder Structure to Create
-```
-AI VAPT/
-├── session.md                    ← this file
-├── PHASES.md                     ← phase task board
-├── .env.example                  ← env var template
-├── .gitignore
-├── docs/
-│   ├── architecture.md
-│   └── adr/
-│       └── ADR-001-tech-stack.md
-├── backend/
-│   ├── pyproject.toml
-│   ├── README.md
-│   ├── main.py                   ← FastAPI app entry
-│   ├── api/
-│   │   ├── __init__.py
-│   │   └── v1/
-│   │       ├── __init__.py
-│   │       └── health.py
-│   ├── agents/
-│   │   └── __init__.py
-│   ├── scanners/
-│   │   └── __init__.py
-│   ├── scoring/
-│   │   └── __init__.py
-│   ├── models/
-│   │   └── __init__.py
-│   └── core/
-│       ├── __init__.py
-│       └── config.py
-├── frontend/
-│   ├── package.json
-│   ├── next.config.ts
-│   ├── tailwind.config.ts
-│   ├── tsconfig.json
-│   ├── app/
-│   │   ├── layout.tsx
-│   │   └── page.tsx
-│   ├── components/
-│   │   └── ui/
-│   └── lib/
-│       └── utils.ts
-├── workers/
-│   └── __init__.py
-├── infra/
-│   ├── docker/
-│   │   ├── docker-compose.yml
-│   │   ├── Dockerfile.backend
-│   │   └── Dockerfile.frontend
-│   ├── terraform/
-│   │   └── .gitkeep
-│   └── k8s/
-│       └── .gitkeep
-├── tools/
-│   ├── nuclei-templates/
-│   │   └── .gitkeep
-│   ├── semgrep-rules/
-│   │   └── .gitkeep
-│   └── zap-config/
-│       └── .gitkeep
-├── tests/
-│   ├── unit/
-│   │   └── .gitkeep
-│   ├── integration/
-│   │   └── .gitkeep
-│   └── targets/
-│       └── README.md             ← instructions to spin up DVWA/Juice Shop
-└── phase-reports/
-    └── .gitkeep
-```
 
 ---
 
@@ -171,6 +78,16 @@ AI VAPT/
 
 ---
 
+## Known Issues / Constraints
+
+- **CLI Write tool corrupts files >50 lines** (line-wrap truncation). CTO writes all long Python files directly. CLI must run `python3 -c "import ast; ast.parse(open('f').read())"` after any file write.
+- **passlib incompatible with bcrypt 5.x** — `__about__` removed. Fixed: replaced passlib with direct `bcrypt` calls in `core/security.py`.
+- **asyncpg connections tied to event loop** — each pytest-anyio test gets its own loop. Fix: `dispose_engine` autouse fixture in `tests/unit/conftest.py`.
+- **postgres dev password:** `sentineldev`
+- **config.py `env_file="../.env"`** — tech debt, switch to `Path(__file__)` in Phase 2.
+
+---
+
 ## Reference Materials
 
 - Blueprint: `~/Downloads/vapt-platform-blueprint_1.html` — full platform spec
@@ -181,55 +98,37 @@ AI VAPT/
 
 ## Current Session Log
 
-**Session #:** 2  
+**Session #:** 3  
 **Date:** 2026-06-25  
 **Phase:** 1 — Core Platform Foundation  
 **What was done:**
-- Installed all backend deps into .venv (fastapi, sqlalchemy, alembic, asyncpg, jose, passlib, celery, anthropic, pytest, ruff, mypy, pydantic[email], dnspython, greenlet)
-- Fixed pyproject.toml build backend (`setuptools.build_meta`)
-- Initialized Alembic, wrote async `alembic/env.py`
-- CTO wrote `models/base.py` + `models/models.py` (5 tables: Organization, User, Target, ScanJob, Finding)
-- Migration autogenerated + `alembic upgrade head` — all 5 tables created in postgres ✅
-- Set postgres password `sentineldev`, fixed `.env` DATABASE_URL
-- CTO wrote `core/db.py` (async SQLAlchemy engine + session)
-- CTO wrote `core/security.py` (bcrypt hash, JWT create/decode)
-- CLI wrote `core/deps.py` (get_current_user FastAPI dependency)
-- CTO wrote `api/v1/auth.py` (POST /auth/register, POST /auth/login)
-- CTO wrote `api/v1/targets.py` (full CRUD + DNS domain verification)
-- Wired auth router into main.py ✅
-- targets router wiring + dnspython install pending
+- Wired `targets_router` into `main.py` ✅
+- Fixed `passlib` + `bcrypt 5.x` incompatibility — replaced with direct `bcrypt` calls in `core/security.py` ✅
+- Live tested all endpoints: `POST /auth/register` → 201, `POST /auth/login` → JWT, `POST /targets` → 201, `GET /targets` → org-scoped list ✅
+- Wrote `tests/unit/test_auth.py` + `tests/unit/test_targets.py` — 12/12 passing ✅
+- Fixed test isolation: `unique_email()` helper + `dispose_engine` autouse fixture in `conftest.py` ✅
+- Updated `PHASES.md` — auth, targets CRUD, domain verify, tests all ✅
+- Committed and pushed: `fca74fa` + test commit to `main`
 
 **Decisions made:**
-- CLI Write tool corrupts files >50 lines — CTO writes all long Python files directly
-- `../env` path in config.py (tech debt: switch to Path(__file__) in Phase 2)
-- postgres dev password: sentineldev
+- 401 (not 403) for unauthenticated requests — correct per RFC 7235
+- Tests hit real dev postgres (no mocks) — per project feedback rule
+- `dispose_engine` fixture needed because each anyio test gets its own event loop
 
 **Blockers:** None
 
 **Next session should:**
-1. Confirm dnspython installed + targets router wired into main.py
-2. Run live test: start uvicorn, hit /auth/register + /auth/login + /targets via curl
-3. Write pytest tests (auth + targets CRUD)
-4. Frontend: login, register, dashboard shell, target list + add form
-5. Commit all + push
-6. Generate phase-1-audit.md in IMP info/reports/
-
-**Decisions made:**
-- CLI has recurring truncation bug on long file writes — CTO writes all Python files >50 lines directly
-- postgres user password set to `sentineldev` for dev
-- greenlet installed as missing dep for SQLAlchemy async
-
-**Blockers:** None — migration autogenerate next step
-
-**Known issues with CLI:** CLI's Write tool truncates/corrupts files >50 lines. CTO writes those files directly. CLI verifies with `python3 -c "import ast; ast.parse(...)"` after any file write.
-
-**Next session should:** Complete migration autogenerate → `alembic upgrade head` → write auth endpoints (core/security.py, core/deps.py, api/v1/auth.py) → targets CRUD → pytest → frontend
+1. Build frontend — auth pages (login, register) in `frontend/app/(auth)/`
+2. Build `frontend/lib/api.ts` — typed fetch client pointing to `http://localhost:8000/api/v1`
+3. Build dashboard shell + nav (`frontend/app/(dashboard)/layout.tsx`)
+4. Build target list + add target form (`frontend/app/(dashboard)/targets/page.tsx`)
+5. Commit frontend + push
+6. Generate `IMP info/reports/phase-1-audit.md`
+7. Mark Phase 1 complete in `PHASES.md` + `IMP info/memory.md`
 
 ---
 
 ## End of Session Template
-
-> Replace "Current Session Log" section with:
 
 ```
 **Session #:** N  
