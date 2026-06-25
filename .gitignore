@@ -43,3 +43,4 @@ logs/
 # Docker volumes (local bind mounts)
 pgdata/
 redisdata/
+.claude/
