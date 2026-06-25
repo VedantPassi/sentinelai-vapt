@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"/Users/vedantpassi/Desktop/Projects/AI VAPT\" && git add -A && git diff --cached --quiet || (git commit -m \"chore: auto-sync session changes\" && git push origin master) 2>/dev/null || true",
+            "statusMessage": "Syncing to GitHub..."
+          }
+        ]
+      }
+    ]
+  }
+}
