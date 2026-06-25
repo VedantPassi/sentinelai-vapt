@@ -55,7 +55,7 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 | Phase | Name | Status |
 |-------|------|--------|
 | 0 | Project Scaffold | ✅ Complete |
-| 1 | Core Platform Foundation | ⬜ Not Started |
+| 1 | Core Platform Foundation | 🔵 In Progress |
 | 2 | Scanning Engine Core | ⬜ Not Started |
 | 3 | AI Agent Framework | ⬜ Not Started |
 | 4 | Validation & Risk Scoring | ⬜ Not Started |
@@ -181,24 +181,31 @@ AI VAPT/
 
 ## Current Session Log
 
-**Session #:** 1  
-**Date:** 2026-06-24  
-**Phase:** 0  
+**Session #:** 2  
+**Date:** 2026-06-25  
+**Phase:** 1 — Core Platform Foundation  
 **What was done:**
-- Created full folder structure per spec
-- Backend: FastAPI skeleton, `/api/v1/health` endpoint, Pydantic settings, `pyproject.toml`
-- Frontend: Next.js 15 (create-next-app@16.2.9) + TypeScript + Tailwind v4 + shadcn/ui v4.11.0
-- docker-compose.yml (postgres:16 + redis:7) + Dockerfiles
-- `.env.example`, `.gitignore`, `docs/architecture.md`, `ADR-001-tech-stack.md`
-- Verified: backend `/health` → 200 ✅, frontend dev server → 200 ✅
-- Generated `phase-reports/phase-0-report.md`
+- Installed all backend deps into .venv (fastapi, sqlalchemy, alembic, asyncpg, jose, passlib, celery, anthropic, pytest, ruff, mypy)
+- Fixed pyproject.toml build backend (`setuptools.build_meta`)
+- Initialized Alembic (`alembic init alembic`)
+- CTO wrote `models/models.py` (5 tables: Organization, User, Target, ScanJob, Finding)
+- CTO wrote `models/base.py` (DeclarativeBase)
+- CTO wrote `alembic/env.py` (async SQLAlchemy setup)
+- Fixed `alembic.ini` sqlalchemy.url with credentials
+- Set postgres password: `ALTER USER sentinel WITH PASSWORD 'sentineldev'`
+- Fixed `.env`: `DATABASE_URL=postgresql+asyncpg://sentinel:sentineldev@localhost:5432/sentinelai`
+- Autogenerate migration in progress
 
 **Decisions made:**
-- Docker compose verification deferred — `compose` plugin not installed on this machine
+- CLI has recurring truncation bug on long file writes — CTO writes all Python files >50 lines directly
+- postgres user password set to `sentineldev` for dev
+- greenlet installed as missing dep for SQLAlchemy async
 
-**Blockers:** None
+**Blockers:** None — migration autogenerate next step
 
-**Next session should:** Start Phase 1 — PostgreSQL schema (users, orgs, targets, scan_jobs, findings) + Alembic migrations. Containers are already running.
+**Known issues with CLI:** CLI's Write tool truncates/corrupts files >50 lines. CTO writes those files directly. CLI verifies with `python3 -c "import ast; ast.parse(...)"` after any file write.
+
+**Next session should:** Complete migration autogenerate → `alembic upgrade head` → write auth endpoints (core/security.py, core/deps.py, api/v1/auth.py) → targets CRUD → pytest → frontend
 
 ---
 

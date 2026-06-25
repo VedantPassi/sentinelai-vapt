@@ -76,7 +76,7 @@
 | Phase | Name | Status | Report |
 |-------|------|--------|--------|
 | 0 | Project Scaffold | ✅ Complete | `IMP info/reports/phase-0-audit.md` |
-| 1 | Core Platform Foundation | 🔵 In Progress | — |
+| 1 | Core Platform Foundation | 🔵 In Progress — DB models done, migration pending | — |
 | 2 | Scanning Engine Core | ⬜ Not Started | — |
 | 3 | AI Agent Framework | ⬜ Not Started | — |
 | 4 | Validation & Risk Scoring | ⬜ Not Started | — |
@@ -124,7 +124,19 @@
 9. PHASES.md + session.md update
 10. Phase audit → `IMP info/reports/phase-1-audit.md`
 
-**Status:** CLI reading backend state — not yet started coding.
+**Status:** 🔵 In Progress — DB models written, Alembic initialized, migration autogenerate next.
+
+**Completed so far:**
+- All backend deps installed into `.venv`
+- `pyproject.toml` build backend fixed
+- Alembic initialized
+- `models/base.py` + `models/models.py` (5 tables) written by CTO
+- `alembic/env.py` written by CTO (async SQLAlchemy)
+- `alembic.ini` URL updated with credentials
+- postgres password set to `sentineldev`
+- `.env` `DATABASE_URL` updated
+
+**Known issue:** CLI's Write tool corrupts files >50 lines (line-wrap truncation). CTO writes all long Python files directly. CLI must run `python3 -c "import ast; ast.parse(open('f').read())"` after every file write.
 
 ---
 
