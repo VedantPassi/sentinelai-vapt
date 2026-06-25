@@ -28,12 +28,12 @@
 
 ---
 
-## Phase 1 — Core Platform Foundation ⬜
+## Phase 1 — Core Platform Foundation 🔵
 
 | Task | Status | Notes |
 |------|--------|-------|
-| PostgreSQL schema: users, orgs, targets, scan_jobs, findings | ⬜ | |
-| Alembic migrations | ⬜ | |
+| PostgreSQL schema: users, orgs, targets, scan_jobs, findings | ✅ | SQLAlchemy models written |
+| Alembic migrations | 🔵 | Init done, autogenerate + upgrade head pending |
 | JWT auth endpoints (register, login, refresh) | ⬜ | |
 | Target management API (CRUD) | ⬜ | |
 | Domain verification flow | ⬜ | |
