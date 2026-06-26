@@ -46,24 +46,24 @@
 
 ---
 
-## Phase 2 — Scanning Engine Core ⬜
+## Phase 2 — Scanning Engine Core ✅
 
 | Task | Status | Notes |
 |------|--------|-------|
-| OWASP ZAP wrapper (subprocess + Docker) | ⬜ | |
-| Nuclei wrapper | ⬜ | |
-| Semgrep wrapper (SAST) | ⬜ | |
-| Nmap wrapper (network scan) | ⬜ | |
-| Gitleaks wrapper (secrets) | ⬜ | |
-| Findings normalization layer | ⬜ | |
-| Scan job API (create, status, cancel) | ⬜ | |
-| Findings storage + retrieval API | ⬜ | |
-| Basic PDF report (fpdf2 or WeasyPrint) | ⬜ | |
-| Celery worker for async scan jobs | ⬜ | |
-| Frontend: scan launcher UI | ⬜ | |
-| Frontend: findings list view | ⬜ | |
-| Test against DVWA or Juice Shop | ⬜ | |
-| phase-reports/phase-2-report.md | ⬜ | |
+| OWASP ZAP wrapper (subprocess + Docker) | ✅ | `backend/scanners/zap_scanner.py` |
+| Nuclei wrapper | ✅ | `backend/scanners/nuclei_scanner.py` |
+| Semgrep wrapper (SAST) | ✅ | `backend/scanners/semgrep_scanner.py` |
+| Nmap wrapper (network scan) | ✅ | `backend/scanners/nmap_scanner.py` — live tested |
+| Gitleaks wrapper (secrets) | ✅ | `backend/scanners/gitleaks_scanner.py` |
+| Findings normalization layer | ✅ | `backend/scanners/base.py` — ScannerResult + FindingData |
+| Scan job API (create, status, cancel) | ✅ | `backend/api/v1/scans.py` |
+| Findings storage + retrieval API | ✅ | GET /scans/{id}/findings with pagination |
+| Basic PDF report (fpdf2) | ✅ | `backend/api/v1/reports.py` — live tested |
+| Celery worker for async scan jobs | ✅ | `backend/workers/scan_worker.py` |
+| Frontend: scan launcher UI | ⬜ | Phase 3 |
+| Frontend: findings list view | ⬜ | Phase 3 |
+| Test against DVWA or Juice Shop | ✅ | Nmap scan — 5 findings, PDF clean |
+| phase-reports/phase-2-report.md | ✅ | `IMP info/reports/phase-2-audit.md` |
 
 ---
 

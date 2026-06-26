@@ -80,7 +80,7 @@
 |-------|------|--------|--------|
 | 0 | Project Scaffold | ✅ Complete | `IMP info/reports/phase-0-audit.md` |
 | 1 | Core Platform Foundation | ✅ Complete | `IMP info/reports/phase-1-audit.md` |
-| 2 | Scanning Engine Core | 🔵 In Progress — scanners written, API + worker pending | — |
+| 2 | Scanning Engine Core | ✅ Complete | `IMP info/reports/phase-2-audit.md` |
 | 3 | AI Agent Framework | ⬜ Not Started | — |
 | 4 | Validation & Risk Scoring | ⬜ Not Started | — |
 | 5 | Reporting & Integrations | ⬜ Not Started | — |
