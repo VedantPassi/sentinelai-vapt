@@ -79,7 +79,7 @@
 | Phase | Name | Status | Report |
 |-------|------|--------|--------|
 | 0 | Project Scaffold | ✅ Complete | `IMP info/reports/phase-0-audit.md` |
-| 1 | Core Platform Foundation | 🔵 In Progress — backend ✅, frontend ⬜ | — |
+| 1 | Core Platform Foundation | ✅ Complete | `IMP info/reports/phase-1-audit.md` |
 | 2 | Scanning Engine Core | ⬜ Not Started | — |
 | 3 | AI Agent Framework | ⬜ Not Started | — |
 | 4 | Validation & Risk Scoring | ⬜ Not Started | — |
@@ -130,15 +130,7 @@
 - `tests/unit/conftest.py` — `unique_email()` + `dispose_engine` autouse fixture
 - Commits pushed: `fca74fa`, latest test commit on `main`
 
-**Remaining Phase 1 tasks:**
-1. Frontend: login page (`frontend/app/(auth)/login/page.tsx`)
-2. Frontend: register page (`frontend/app/(auth)/register/page.tsx`)
-3. Frontend: auth layout (`frontend/app/(auth)/layout.tsx`)
-4. Frontend: `frontend/lib/api.ts` — typed fetch client
-5. Frontend: dashboard shell + nav
-6. Frontend: target list + add target form
-7. Commit frontend + push
-8. Generate `IMP info/reports/phase-1-audit.md`
+**Phase 1 is COMPLETE.** All tasks done, pushed to main, audit report generated.
 
 **Known issues:**
 - CLI Write tool corrupts files >50 lines — CTO writes all long Python/TSX files directly

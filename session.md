@@ -55,7 +55,7 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 | Phase | Name | Status |
 |-------|------|--------|
 | 0 | Project Scaffold | ✅ Complete |
-| 1 | Core Platform Foundation | 🔵 In Progress — backend done, frontend remaining |
+| 1 | Core Platform Foundation | ✅ Complete |
 | 2 | Scanning Engine Core | ⬜ Not Started |
 | 3 | AI Agent Framework | ⬜ Not Started |
 | 4 | Validation & Risk Scoring | ⬜ Not Started |
@@ -63,7 +63,7 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 | 6 | Advanced Modules (Cloud/K8s) | ⬜ Not Started |
 | 7 | Enterprise Features | ⬜ Not Started |
 
-**Current Phase: 1**
+**Current Phase: 2**
 
 ---
 
