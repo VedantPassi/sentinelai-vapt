@@ -98,33 +98,38 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 
 ## Current Session Log
 
-**Session #:** 3  
-**Date:** 2026-06-25  
-**Phase:** 1 — Core Platform Foundation  
+**Session #:** 4  
+**Date:** 2026-06-26  
+**Phase:** 2 — Scanning Engine Core  
 **What was done:**
-- Wired `targets_router` into `main.py` ✅
-- Fixed `passlib` + `bcrypt 5.x` incompatibility — replaced with direct `bcrypt` calls in `core/security.py` ✅
-- Live tested all endpoints: `POST /auth/register` → 201, `POST /auth/login` → JWT, `POST /targets` → 201, `GET /targets` → org-scoped list ✅
-- Wrote `tests/unit/test_auth.py` + `tests/unit/test_targets.py` — 12/12 passing ✅
-- Fixed test isolation: `unique_email()` helper + `dispose_engine` autouse fixture in `conftest.py` ✅
-- Updated `PHASES.md` — auth, targets CRUD, domain verify, tests all ✅
-- Committed and pushed: `fca74fa` + test commit to `main`
+- Phase 1 fully closed: frontend built + live tested, audit report generated, all pushed ✅
+- Phase 2 started:
+  - Added Kafka + Zookeeper to `infra/docker/docker-compose.yml` ✅
+  - Installed `celery[redis]`, `fpdf2`, `httpx` into `.venv` ✅
+  - CTO wrote all 6 scanner wrappers — syntax verified: ✅
+    - `backend/scanners/base.py` — ScannerResult + FindingData dataclasses
+    - `backend/scanners/nmap_scanner.py` — Nmap XML parser
+    - `backend/scanners/nuclei_scanner.py` — Nuclei JSONL parser
+    - `backend/scanners/zap_scanner.py` — ZAP Docker subprocess + JSON report parser
+    - `backend/scanners/semgrep_scanner.py` — Semgrep JSON parser
+    - `backend/scanners/gitleaks_scanner.py` — Gitleaks JSON parser
+  - Created `backend/workers/` package ✅
 
 **Decisions made:**
-- 401 (not 403) for unauthenticated requests — correct per RFC 7235
-- Tests hit real dev postgres (no mocks) — per project feedback rule
-- `dispose_engine` fixture needed because each anyio test gets its own event loop
+- ZAP runs via Docker subprocess (no local ZAP install required)
+- Celery uses Redis as broker (same Redis instance, different DB index)
+- Kafka ephemeral in dev (no volume) — stateless queue fine for Phase 2
 
 **Blockers:** None
 
 **Next session should:**
-1. Build frontend — auth pages (login, register) in `frontend/app/(auth)/`
-2. Build `frontend/lib/api.ts` — typed fetch client pointing to `http://localhost:8000/api/v1`
-3. Build dashboard shell + nav (`frontend/app/(dashboard)/layout.tsx`)
-4. Build target list + add target form (`frontend/app/(dashboard)/targets/page.tsx`)
-5. Commit frontend + push
-6. Generate `IMP info/reports/phase-1-audit.md`
-7. Mark Phase 1 complete in `PHASES.md` + `IMP info/memory.md`
+1. TASK 4 — Write `backend/api/v1/scans.py` (POST /scans, GET /scans/{id}, GET /scans/{id}/findings)
+2. Wire scans router into `main.py`
+3. TASK 5 — Write `backend/workers/scan_worker.py` (Celery task dispatching to scanners)
+4. TASK 6 — Write `backend/api/v1/reports.py` (GET /scans/{id}/report → PDF via fpdf2)
+5. TASK 7 — Test against DVWA (spin up via Docker, run web scan, verify findings stored)
+6. Commit all + push
+7. Generate `IMP info/reports/phase-2-audit.md`
 
 ---
 

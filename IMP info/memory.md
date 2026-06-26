@@ -80,7 +80,7 @@
 |-------|------|--------|--------|
 | 0 | Project Scaffold | ✅ Complete | `IMP info/reports/phase-0-audit.md` |
 | 1 | Core Platform Foundation | ✅ Complete | `IMP info/reports/phase-1-audit.md` |
-| 2 | Scanning Engine Core | ⬜ Not Started | — |
+| 2 | Scanning Engine Core | 🔵 In Progress — scanners written, API + worker pending | — |
 | 3 | AI Agent Framework | ⬜ Not Started | — |
 | 4 | Validation & Risk Scoring | ⬜ Not Started | — |
 | 5 | Reporting & Integrations | ⬜ Not Started | — |
@@ -131,6 +131,28 @@
 - Commits pushed: `fca74fa`, latest test commit on `main`
 
 **Phase 1 is COMPLETE.** All tasks done, pushed to main, audit report generated.
+
+## Phase 2 — In Progress
+
+**Completed so far:**
+- Kafka + Zookeeper added to `infra/docker/docker-compose.yml`
+- Deps installed: `celery[redis]`, `fpdf2`, `httpx`
+- All 6 scanner wrappers written + syntax verified:
+  - `backend/scanners/base.py` — ScannerResult + FindingData dataclasses
+  - `backend/scanners/nmap_scanner.py`
+  - `backend/scanners/nuclei_scanner.py`
+  - `backend/scanners/zap_scanner.py` (Docker subprocess)
+  - `backend/scanners/semgrep_scanner.py`
+  - `backend/scanners/gitleaks_scanner.py`
+- `backend/workers/` package created
+
+**Remaining:**
+1. `backend/api/v1/scans.py` — POST /scans, GET /scans/{id}, GET /scans/{id}/findings
+2. Wire scans router into `main.py`
+3. `backend/workers/scan_worker.py` — Celery task
+4. `backend/api/v1/reports.py` — PDF generation (fpdf2)
+5. Test against DVWA
+6. `IMP info/reports/phase-2-audit.md`
 
 **Known issues:**
 - CLI Write tool corrupts files >50 lines — CTO writes all long Python/TSX files directly
