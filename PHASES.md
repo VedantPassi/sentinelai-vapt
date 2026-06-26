@@ -28,7 +28,7 @@
 
 ---
 
-## Phase 1 — Core Platform Foundation 🔵
+## Phase 1 — Core Platform Foundation ✅
 
 | Task | Status | Notes |
 |------|--------|-------|
@@ -38,11 +38,11 @@
 | Target management API (CRUD) | ✅ | All 5 endpoints live tested |
 | Domain verification flow | ✅ | DNS TXT record check (_sentinelai-verify) |
 | pytest: auth + target CRUD tests | ✅ | 12/12 passing |
-| Next.js: auth pages (login/register) | ⬜ | |
-| Next.js: dashboard shell + nav | ⬜ | |
-| Next.js: target list + add target form | ⬜ | |
-| API client (frontend → backend) | ⬜ | |
-| phase-reports/phase-1-report.md | ⬜ | |
+| Next.js: auth pages (login/register) | ✅ | Live tested in browser |
+| Next.js: dashboard shell + nav | ✅ | Auth guard + nav wired |
+| Next.js: target list + add target form | ✅ | Live tested in browser |
+| API client (frontend → backend) | ✅ | `frontend/lib/api.ts` — typed fetch client |
+| phase-reports/phase-1-report.md | ✅ | `IMP info/reports/phase-1-audit.md` |
 
 ---
 
