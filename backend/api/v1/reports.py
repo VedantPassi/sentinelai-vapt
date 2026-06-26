@@ -67,7 +67,7 @@ def _build_pdf(scan: ScanJob, target: Target | None, findings: list[Finding]) ->
     # Header
     pdf.set_font("Helvetica", "B", 20)
     pdf.set_text_color(20, 20, 20)
-    pdf.cell(0, 10, "SentinelAI — Scan Report", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 10, "SentinelAI - Scan Report", new_x="LMARGIN", new_y="NEXT")
 
     pdf.set_font("Helvetica", "", 10)
     pdf.set_text_color(100, 100, 100)
@@ -86,8 +86,8 @@ def _build_pdf(scan: ScanJob, target: Target | None, findings: list[Finding]) ->
         ("Target", target.url if target else "unknown"),
         ("Type", scan.scan_type),
         ("Status", scan.status),
-        ("Started", str(scan.started_at or "—")),
-        ("Completed", str(scan.completed_at or "—")),
+        ("Started", str(scan.started_at or "-")),
+        ("Completed", str(scan.completed_at or "-")),
     ]
     for label, value in meta:
         pdf.set_font("Helvetica", "B", 10)
