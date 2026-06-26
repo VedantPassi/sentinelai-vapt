@@ -59,6 +59,10 @@ async def download_report(
     )
 
 
+def _s(text: str) -> str:
+    return text.replace("—", "-").replace("–", "-").replace("•", "*")
+
+
 def _build_pdf(scan: ScanJob, target: Target | None, findings: list[Finding]) -> bytes:
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
@@ -123,16 +127,16 @@ def _build_pdf(scan: ScanJob, target: Target | None, findings: list[Finding]) ->
             r, g, b = _SEVERITY_COLORS.get(f.severity, (80, 80, 80))
             pdf.set_font("Helvetica", "B", 10)
             pdf.set_text_color(r, g, b)
-            pdf.cell(0, 7, f"{i}. [{f.severity.upper()}] {f.title}", new_x="LMARGIN", new_y="NEXT")
+            pdf.cell(0, 7, _s(f"{i}. [{f.severity.upper()}] {f.title}"), new_x="LMARGIN", new_y="NEXT")
 
             pdf.set_font("Helvetica", "", 9)
             pdf.set_text_color(60, 60, 60)
-            pdf.multi_cell(0, 5, f.description or "")
+            pdf.multi_cell(0, 5, _s(f.description or ""))
 
             if f.remediation:
                 pdf.set_font("Helvetica", "I", 9)
                 pdf.set_text_color(80, 100, 80)
-                pdf.multi_cell(0, 5, f"Remediation: {f.remediation}")
+                pdf.multi_cell(0, 5, _s(f"Remediation: {f.remediation}"))
 
             pdf.set_text_color(20, 20, 20)
             pdf.ln(3)
