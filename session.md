@@ -123,13 +123,13 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 **Blockers:** None
 
 **Next session should:**
-1. TASK 4 — Write `backend/api/v1/scans.py` (POST /scans, GET /scans/{id}, GET /scans/{id}/findings)
-2. Wire scans router into `main.py`
-3. TASK 5 — Write `backend/workers/scan_worker.py` (Celery task dispatching to scanners)
-4. TASK 6 — Write `backend/api/v1/reports.py` (GET /scans/{id}/report → PDF via fpdf2)
-5. TASK 7 — Test against DVWA (spin up via Docker, run web scan, verify findings stored)
-6. Commit all + push
-7. Generate `IMP info/reports/phase-2-audit.md`
+1. CTO reads `main.py` to confirm wiring pattern
+2. CTO writes `backend/api/v1/scans.py` — POST /scans, GET /scans/{id}, GET /scans/{id}/findings
+3. Wire scans router into `main.py`
+4. CTO writes `backend/workers/scan_worker.py` — Celery task dispatching to correct scanner
+5. CTO writes `backend/api/v1/reports.py` — GET /scans/{id}/report → PDF via fpdf2
+6. Test against DVWA
+7. Commit + push + `IMP info/reports/phase-2-audit.md`
 
 ---
 
