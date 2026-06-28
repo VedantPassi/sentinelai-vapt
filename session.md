@@ -127,17 +127,14 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 - ANTHROPIC_API_KEY empty in .env — planner + enrichment skip gracefully, scanners still run
 
 **Blockers:**
-- ANTHROPIC_API_KEY not set in .env — Claude enrichment will skip until filled
-- Celery agent worker not tested end-to-end yet (Nmap scan + findings storage)
+- ANTHROPIC_API_KEY not set in .env — Claude enrichment skips gracefully, add key to unlock planner + CVE mapping
 
 **Next session should:**
-1. Start Celery agent worker:
-   `PYTHONPATH=. .venv/bin/celery -A workers.agent_worker worker --loglevel=info`
-2. Add ANTHROPIC_API_KEY to .env
-3. POST /agent-scans → wait → GET status → verify progress_events populated
-4. GET /agent-scans/{id}/findings → verify findings stored
+1. Add ANTHROPIC_API_KEY to .env — run another agent scan to test full Claude enrichment path
+2. Frontend: scan launcher UI (POST /agent-scans form with target selector + scan type)
+3. Frontend: real-time progress view (WebSocket /ws/agent-scans/{id} → live event stream)
+4. Frontend: findings list view for agent scans
 5. Generate `IMP info/reports/phase-3-audit.md`
-6. Start Phase 3 frontend: scan launcher UI + real-time progress WebSocket view
 
 ---
 
