@@ -115,7 +115,9 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
   - `backend/api/v1/agent_scans.py` — POST /agent-scans, GET /{id}, GET /{id}/findings, WS /ws/{id}
 - `main.py` updated — agent_scans_router wired ✅
 - Live API test: POST /agent-scans → 201, scan_id returned, status=pending ✅
-- Celery worker not started yet — scan stays pending (expected)
+- Celery agent worker started + confirmed working ✅
+- Full end-to-end test: POST /agent-scans → Celery → LangGraph → Nmap → 4 findings stored in DB ✅
+- progress_events persisted to scan.config JSONB, WebSocket polling confirmed functional ✅
 
 **Decisions made:**
 - WebSocket progress: DB polling (scan.config["progress_events"]) — Redis stream deferred to Phase 5
