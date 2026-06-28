@@ -57,8 +57,8 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 | 0 | Project Scaffold | ✅ Complete |
 | 1 | Core Platform Foundation | ✅ Complete |
 | 2 | Scanning Engine Core | ✅ Complete |
-| 2 | Scanning Engine Core | ⬜ Not Started |
-| 3 | AI Agent Framework | ⬜ Not Started |
+| 2 | Scanning Engine Core | ✅ Complete |
+| 3 | AI Agent Framework | 🔄 In Progress |
 | 4 | Validation & Risk Scoring | ⬜ Not Started |
 | 5 | Reporting & Integrations | ⬜ Not Started |
 | 6 | Advanced Modules (Cloud/K8s) | ⬜ Not Started |
@@ -99,38 +99,43 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 
 ## Current Session Log
 
-**Session #:** 4  
-**Date:** 2026-06-26  
-**Phase:** 2 — Scanning Engine Core  
+**Session #:** 5
+**Date:** 2026-06-28
+**Phase:** 3 — AI Agent Framework
+
 **What was done:**
-- Phase 1 fully closed: frontend built + live tested, audit report generated, all pushed ✅
-- Phase 2 started:
-  - Added Kafka + Zookeeper to `infra/docker/docker-compose.yml` ✅
-  - Installed `celery[redis]`, `fpdf2`, `httpx` into `.venv` ✅
-  - CTO wrote all 6 scanner wrappers — syntax verified: ✅
-    - `backend/scanners/base.py` — ScannerResult + FindingData dataclasses
-    - `backend/scanners/nmap_scanner.py` — Nmap XML parser
-    - `backend/scanners/nuclei_scanner.py` — Nuclei JSONL parser
-    - `backend/scanners/zap_scanner.py` — ZAP Docker subprocess + JSON report parser
-    - `backend/scanners/semgrep_scanner.py` — Semgrep JSON parser
-    - `backend/scanners/gitleaks_scanner.py` — Gitleaks JSON parser
-  - Created `backend/workers/` package ✅
+- All Phase 3 agent files written + syntax verified ✅:
+  - `backend/agents/state.py` — AgentState TypedDict, ReconData, AttackPlan, AttackVector, ProgressEvent
+  - `backend/agents/runtime.py` — LangGraph graph (recon→planner→webapp|network), lazy compile, `run_agent_scan()` entry point
+  - `backend/agents/recon_agent.py` — async DNS lookup (run_in_executor), subdomain enum, HTTP fingerprint
+  - `backend/agents/planner_agent.py` — Claude Opus 4.8 attack planning, MITRE ATT&CK vectors, graceful no-key fallback
+  - `backend/agents/webapp_agent.py` — parallel ZAP + Nuclei, Claude sonnet-4-6 enrichment
+  - `backend/agents/network_agent.py` — Nmap + optional Gitleaks, Claude CVE mapping
+  - `backend/workers/agent_worker.py` — Celery task wrapping run_agent_scan, stores findings in DB
+  - `backend/api/v1/agent_scans.py` — POST /agent-scans, GET /{id}, GET /{id}/findings, WS /ws/{id}
+- `main.py` updated — agent_scans_router wired ✅
+- Live API test: POST /agent-scans → 201, scan_id returned, status=pending ✅
+- Celery worker not started yet — scan stays pending (expected)
 
 **Decisions made:**
-- ZAP runs via Docker subprocess (no local ZAP install required)
-- Celery uses Redis as broker (same Redis instance, different DB index)
-- Kafka ephemeral in dev (no volume) — stateless queue fine for Phase 2
+- WebSocket progress: DB polling (scan.config["progress_events"]) — Redis stream deferred to Phase 5
+- Tenant isolation: Target join pattern (no org_id on ScanJob) — matches existing scans.py
+- Model split: claude-opus-4-8 for planner (reasoning), claude-sonnet-4-6 for webapp/network enrichment
+- WS endpoint has no auth (acceptable Phase 3 dev risk — Phase 5 fix)
+- ANTHROPIC_API_KEY empty in .env — planner + enrichment skip gracefully, scanners still run
 
-**Blockers:** None
+**Blockers:**
+- ANTHROPIC_API_KEY not set in .env — Claude enrichment will skip until filled
+- Celery agent worker not tested end-to-end yet (Nmap scan + findings storage)
 
 **Next session should:**
-1. CTO reads `main.py` to confirm wiring pattern
-2. CTO writes `backend/api/v1/scans.py` — POST /scans, GET /scans/{id}, GET /scans/{id}/findings
-3. Wire scans router into `main.py`
-4. CTO writes `backend/workers/scan_worker.py` — Celery task dispatching to correct scanner
-5. CTO writes `backend/api/v1/reports.py` — GET /scans/{id}/report → PDF via fpdf2
-6. Test against DVWA
-7. Commit + push + `IMP info/reports/phase-2-audit.md`
+1. Start Celery agent worker:
+   `PYTHONPATH=. .venv/bin/celery -A workers.agent_worker worker --loglevel=info`
+2. Add ANTHROPIC_API_KEY to .env
+3. POST /agent-scans → wait → GET status → verify progress_events populated
+4. GET /agent-scans/{id}/findings → verify findings stored
+5. Generate `IMP info/reports/phase-3-audit.md`
+6. Start Phase 3 frontend: scan launcher UI + real-time progress WebSocket view
 
 ---
 
