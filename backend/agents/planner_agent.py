@@ -4,6 +4,8 @@ import json
 import logging
 from datetime import datetime, timezone
 
+import anthropic
+
 from agents.state import AgentState, AttackPlan, AttackVector, ProgressEvent
 from core.config import settings
 
@@ -73,10 +75,9 @@ async def run(state: AgentState) -> AgentState:
     )
 
     try:
-        import anthropic
         client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
         message = await client.messages.create(
-            model="claude-sonnet-4-6",
+            model="claude-opus-4-8",
             max_tokens=1024,
             system=_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": prompt}],
