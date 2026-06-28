@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from api.v1.agent_scans import router as agent_scans_router
 from api.v1.auth import router as auth_router
 from api.v1.health import router as health_router
 from api.v1.reports import router as reports_router
@@ -22,3 +23,4 @@ app.include_router(auth_router, prefix="/api/v1")
 app.include_router(targets_router, prefix="/api/v1")
 app.include_router(scans_router, prefix="/api/v1")
 app.include_router(reports_router, prefix="/api/v1")
+app.include_router(agent_scans_router, prefix="/api/v1")
