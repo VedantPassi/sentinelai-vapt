@@ -44,4 +44,27 @@ def _route_by_target_type(state: AgentState) -> str:
     return "end"
 
 
-compiled_graph = build_graph().compile()
+_compiled_graph = None
+
+
+def get_graph():
+    global _compiled_graph
+    if _compiled_graph is None:
+        _compiled_graph = build_graph().compile()
+    return _compiled_graph
+
+
+async def run_agent_scan(scan_id: str, target_url: str, target_type: str, config: dict) -> AgentState:
+    initial: AgentState = {
+        "scan_id": scan_id,
+        "target_url": target_url,
+        "target_type": target_type,
+        "config": config,
+        "recon_data": None,
+        "attack_plan": None,
+        "findings": [],
+        "current_node": "start",
+        "progress_events": [],
+        "error": None,
+    }
+    return await get_graph().ainvoke(initial)
