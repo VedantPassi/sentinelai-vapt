@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.deps import get_current_user
 from core.db import get_db
-from models.models import Finding, ScanJob, User
+from models.models import Finding, ScanJob, Target, User
 from workers.agent_worker import run_agent_task
 
 router = APIRouter(prefix="/agent-scans", tags=["agent-scans"])
@@ -36,22 +36,41 @@ class AgentScanResponse(BaseModel):
     error: str | None = None
 
 
+async def _get_scan_or_404(scan_id: uuid.UUID, org_id: uuid.UUID, db: AsyncSession) -> ScanJob:
+    result = await db.execute(
+        select(ScanJob)
+        .join(Target, ScanJob.target_id == Target.id)
+        .where(ScanJob.id == scan_id, Target.org_id == org_id)
+    )
+    scan = result.scalar_one_or_none()
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan not found")
+    return scan
+
+
 @router.post("", response_model=AgentScanResponse, status_code=201)
 async def create_agent_scan(
     payload: AgentScanCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> AgentScanResponse:
-    scan_id = uuid.uuid4()
-    now = datetime.now(timezone.utc)
+    # Verify target belongs to this org
+    target_result = await db.execute(
+        select(Target).where(
+            Target.id == uuid.UUID(payload.target_id),
+            Target.org_id == current_user.org_id,
+        )
+    )
+    target = target_result.scalar_one_or_none()
+    if not target:
+        raise HTTPException(status_code=404, detail="Target not found")
 
+    scan_id = uuid.uuid4()
     scan = ScanJob(
         id=scan_id,
-        org_id=current_user.org_id,
         target_id=uuid.UUID(payload.target_id),
         scan_type=f"agent_{payload.target_type}",
-        status="queued",
-        created_at=now,
+        status="pending",
         config={"target_url": payload.target_url, "target_type": payload.target_type,
                 **payload.config},
     )
@@ -66,12 +85,13 @@ async def create_agent_scan(
         payload.config,
     )
 
+    created_at = (scan.started_at or datetime.now(timezone.utc)).isoformat()
     return AgentScanResponse(
         id=str(scan.id),
         status=scan.status,
         target_url=payload.target_url,
         target_type=payload.target_type,
-        created_at=now.isoformat(),
+        created_at=created_at,
     )
 
 
@@ -81,23 +101,15 @@ async def get_agent_scan(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> AgentScanResponse:
-    result = await db.execute(
-        select(ScanJob).where(
-            ScanJob.id == uuid.UUID(scan_id),
-            ScanJob.org_id == current_user.org_id,
-        )
-    )
-    scan = result.scalar_one_or_none()
-    if not scan:
-        raise HTTPException(status_code=404, detail="Scan not found")
-
+    scan = await _get_scan_or_404(uuid.UUID(scan_id), current_user.org_id, db)
     cfg = scan.config or {}
+    created_at = (scan.started_at or datetime.now(timezone.utc)).isoformat()
     return AgentScanResponse(
         id=str(scan.id),
         status=scan.status,
         target_url=cfg.get("target_url", ""),
         target_type=cfg.get("target_type", "web"),
-        created_at=scan.created_at.isoformat(),
+        created_at=created_at,
         progress_events=cfg.get("progress_events", []),
         error=cfg.get("error"),
     )
@@ -112,15 +124,7 @@ async def get_agent_scan_findings(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> dict:
-    result = await db.execute(
-        select(ScanJob).where(
-            ScanJob.id == uuid.UUID(scan_id),
-            ScanJob.org_id == current_user.org_id,
-        )
-    )
-    scan = result.scalar_one_or_none()
-    if not scan:
-        raise HTTPException(status_code=404, detail="Scan not found")
+    await _get_scan_or_404(uuid.UUID(scan_id), current_user.org_id, db)
 
     query = select(Finding).where(Finding.scan_id == uuid.UUID(scan_id))
     if severity:
