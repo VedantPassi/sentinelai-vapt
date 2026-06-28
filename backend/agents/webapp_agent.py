@@ -4,6 +4,7 @@ import asyncio
 import logging
 from datetime import datetime, timezone
 
+import json
 import anthropic
 
 from agents.state import AgentState, ProgressEvent
@@ -53,8 +54,8 @@ async def run(state: AgentState) -> AgentState:
     # Run ZAP + Nuclei in parallel
     state["progress_events"].append(_event("started", "Running ZAP + Nuclei scans in parallel"))
     zap_result, nuclei_result = await asyncio.gather(
-        zap_scanner.run(target_url, state.get("config")),
-        nuclei_scanner.run(target_url, state.get("config")),
+        zap_scanner.run(target_url, state.get("config") or {}),
+        nuclei_scanner.run(target_url, state.get("config") or {}),
         return_exceptions=True,
     )
 
@@ -93,8 +94,6 @@ async def _enrich(findings: list[FindingData], state: AgentState) -> list[Findin
     if not settings.anthropic_api_key:
         logger.warning("No API key — skipping Claude enrichment")
         return findings
-
-    import json
 
     plan = state.get("attack_plan")
     plan_summary = plan.summary if plan else "No attack plan available"
