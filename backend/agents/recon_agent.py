@@ -71,14 +71,16 @@ async def _dns_lookup(domain: str) -> dict[str, list[str]]:
     resolver = dns.resolver.Resolver()
     resolver.timeout = 3
     resolver.lifetime = 5
+    loop = asyncio.get_running_loop()
 
-    for rtype in ("A", "MX", "TXT", "CNAME", "NS"):
+    async def _resolve(rtype: str) -> None:
         try:
-            answers = resolver.resolve(domain, rtype)
+            answers = await loop.run_in_executor(None, lambda: resolver.resolve(domain, rtype))
             records[rtype] = [str(r) for r in answers]
         except Exception:
             pass
 
+    await asyncio.gather(*[_resolve(rt) for rt in ("A", "MX", "TXT", "CNAME", "NS")])
     return records
 
 
@@ -91,7 +93,7 @@ async def _enum_subdomains(domain: str) -> list[str]:
     async def check(sub: str) -> None:
         fqdn = f"{sub}.{domain}"
         try:
-            await asyncio.get_event_loop().run_in_executor(
+            await asyncio.get_running_loop().run_in_executor(
                 None, lambda: resolver.resolve(fqdn, "A")
             )
             found.append(fqdn)
