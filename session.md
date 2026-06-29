@@ -99,8 +99,8 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 
 ## Current Session Log
 
-**Session #:** 5
-**Date:** 2026-06-28
+**Session #:** 5–6
+**Date:** 2026-06-28 to 2026-06-30
 **Phase:** 3 — AI Agent Framework
 
 **What was done:**
@@ -114,27 +114,35 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
   - `backend/workers/agent_worker.py` — Celery task wrapping run_agent_scan, stores findings in DB
   - `backend/api/v1/agent_scans.py` — POST /agent-scans, GET /{id}, GET /{id}/findings, WS /ws/{id}
 - `main.py` updated — agent_scans_router wired ✅
-- Live API test: POST /agent-scans → 201, scan_id returned, status=pending ✅
-- Celery agent worker started + confirmed working ✅
-- Full end-to-end test: POST /agent-scans → Celery → LangGraph → Nmap → 4 findings stored in DB ✅
-- progress_events persisted to scan.config JSONB, WebSocket polling confirmed functional ✅
+- Live e2e test: POST /agent-scans → Celery → LangGraph → Nmap → 4 findings stored ✅
+- Two full audit rounds run — all findings fixed ✅:
+  - `await db.delete()` → `db.delete()` (sync call)
+  - dnspython + fpdf2 added to pyproject.toml
+  - ScanJob.created_at added + Alembic migration applied
+  - CORS hardcoded origins → settings.cors_origins
+  - agent_scans.py created_at fallback uses model fields (no datetime.now())
+  - reports.py bytes(pdf.output()) → pdf.output()
+  - scans.py run_scan moved to top-level import
+  - deps.py uuid.UUID parse guarded with try/except → 401
+  - auth.py password minimum length (8 chars) enforced
+  - zap_scanner.py /tmp/zap hardcoded path → uuid-based per-scan dir
 
 **Decisions made:**
-- WebSocket progress: DB polling (scan.config["progress_events"]) — Redis stream deferred to Phase 5
-- Tenant isolation: Target join pattern (no org_id on ScanJob) — matches existing scans.py
-- Model split: claude-opus-4-8 for planner (reasoning), claude-sonnet-4-6 for webapp/network enrichment
-- WS endpoint has no auth (acceptable Phase 3 dev risk — Phase 5 fix)
-- ANTHROPIC_API_KEY empty in .env — planner + enrichment skip gracefully, scanners still run
+- WebSocket progress: DB polling — Redis stream Phase 5
+- Tenant isolation: Target join pattern (no org_id on ScanJob)
+- claude-opus-4-8 for planner, claude-sonnet-4-6 for enrichment
+- WS endpoint no auth — Phase 5 fix
+- ANTHROPIC_API_KEY empty → graceful skip, scanners still run
 
 **Blockers:**
-- ANTHROPIC_API_KEY not set in .env — Claude enrichment skips gracefully, add key to unlock planner + CVE mapping
+- ANTHROPIC_API_KEY not in .env — Claude enrichment skips until filled
+- phase-3-audit.md not generated yet
 
 **Next session should:**
-1. Add ANTHROPIC_API_KEY to .env — run another agent scan to test full Claude enrichment path
-2. Frontend: scan launcher UI (POST /agent-scans form with target selector + scan type)
-3. Frontend: real-time progress view (WebSocket /ws/agent-scans/{id} → live event stream)
-4. Frontend: findings list view for agent scans
-5. Generate `IMP info/reports/phase-3-audit.md`
+1. Add ANTHROPIC_API_KEY to .env
+2. Run full agent scan with Claude enrichment to verify planner + CVE mapping
+3. Generate `IMP info/reports/phase-3-audit.md`
+4. Frontend: scan launcher UI + WebSocket progress view + findings list
 
 ---
 
