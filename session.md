@@ -58,7 +58,7 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 | 1 | Core Platform Foundation | ✅ Complete |
 | 2 | Scanning Engine Core | ✅ Complete |
 | 2 | Scanning Engine Core | ✅ Complete |
-| 3 | AI Agent Framework | 🔄 In Progress |
+| 3 | AI Agent Framework | ✅ Complete |
 | 4 | Validation & Risk Scoring | ⬜ Not Started |
 | 5 | Reporting & Integrations | ⬜ Not Started |
 | 6 | Advanced Modules (Cloud/K8s) | ⬜ Not Started |
@@ -135,14 +135,12 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 - ANTHROPIC_API_KEY empty → graceful skip, scanners still run
 
 **Blockers:**
-- ANTHROPIC_API_KEY not in .env — Claude enrichment skips until filled
-- phase-3-audit.md not generated yet
+- ANTHROPIC_API_KEY not in .env — Claude enrichment skips (non-blocking)
 
 **Next session should:**
-1. Add ANTHROPIC_API_KEY to .env
-2. Run full agent scan with Claude enrichment to verify planner + CVE mapping
-3. Generate `IMP info/reports/phase-3-audit.md`
-4. Frontend: scan launcher UI + WebSocket progress view + findings list
+1. Start Phase 4 — Validation & Risk Scoring
+2. Add ANTHROPIC_API_KEY to .env before Phase 4 agent work
+3. Phase 4 tasks: SRS scoring formula, Validation Agent (PoC confirmation), false-positive classifier
 
 ---
 
