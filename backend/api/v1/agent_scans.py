@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import json
 import uuid
-from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
@@ -85,7 +84,7 @@ async def create_agent_scan(
         payload.config,
     )
 
-    created_at = (scan.started_at or datetime.now(timezone.utc)).isoformat()
+    created_at = (scan.started_at or scan.completed_at or scan.created_at).isoformat()
     return AgentScanResponse(
         id=str(scan.id),
         status=scan.status,
@@ -103,7 +102,7 @@ async def get_agent_scan(
 ) -> AgentScanResponse:
     scan = await _get_scan_or_404(uuid.UUID(scan_id), current_user.org_id, db)
     cfg = scan.config or {}
-    created_at = (scan.started_at or datetime.now(timezone.utc)).isoformat()
+    created_at = (scan.started_at or scan.completed_at or scan.created_at).isoformat()
     return AgentScanResponse(
         id=str(scan.id),
         status=scan.status,
