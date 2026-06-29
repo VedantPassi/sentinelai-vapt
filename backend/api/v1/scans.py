@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.db import get_db
 from core.deps import get_current_user
 from models.models import Finding, ScanJob, Target, User
+from workers.scan_worker import run_scan
 
 router = APIRouter(prefix="/scans", tags=["scans"])
 
@@ -81,7 +82,6 @@ async def create_scan(
     await db.commit()
     await db.refresh(scan)
 
-    from workers.scan_worker import run_scan
     run_scan.delay(str(scan.id), target.url, body.scan_type, body.config or {})
 
     return scan

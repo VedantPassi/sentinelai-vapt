@@ -1,6 +1,7 @@
 import asyncio
 import json
 import time
+import uuid
 
 from scanners.base import FindingData, ScannerResult
 
@@ -9,15 +10,17 @@ _RISK_MAP = {"High": "high", "Medium": "medium", "Low": "low", "Informational": 
 
 async def run(target_url: str, config: dict | None = None) -> ScannerResult:
     start = time.monotonic()
-    report_path = "/zap/wrk/report.json"
+    run_id = uuid.uuid4().hex
+    host_dir = f"/tmp/zap-{run_id}"
+    container_report = "/zap/wrk/report.json"
 
     cmd = [
         "docker", "run", "--rm",
-        "-v", "/tmp/zap:/zap/wrk",
+        "-v", f"{host_dir}:/zap/wrk",
         "ghcr.io/zaproxy/zaproxy:stable",
         "zap-baseline.py",
         "-t", target_url,
-        "-J", report_path,
+        "-J", container_report,
         "-I",
     ]
 
@@ -37,7 +40,7 @@ async def run(target_url: str, config: dict | None = None) -> ScannerResult:
     raw = stdout.decode() + stderr.decode()
 
     try:
-        with open("/tmp/zap/report.json") as f:
+        with open(f"{host_dir}/report.json") as f:
             report = json.load(f)
         findings = _parse_report(report)
     except (FileNotFoundError, json.JSONDecodeError) as exc:

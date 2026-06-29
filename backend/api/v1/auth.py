@@ -17,6 +17,14 @@ class RegisterRequest(BaseModel):
     password: str
     org_name: str = "Default Organization"
 
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    def model_post_init(self, __context: object) -> None:
+        if len(self.password) < 8:
+            raise ValueError("Password must be at least 8 characters")
+
 
 class LoginRequest(BaseModel):
     email: EmailStr

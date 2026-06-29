@@ -145,4 +145,4 @@ def _build_pdf(scan: ScanJob, target: Target | None, findings: list[Finding]) ->
         pdf.set_text_color(100, 100, 100)
         pdf.cell(0, 8, "No findings for this scan.", new_x="LMARGIN", new_y="NEXT")
 
-    return bytes(pdf.output())
+    return pdf.output()
