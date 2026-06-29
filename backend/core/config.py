@@ -20,6 +20,8 @@ class Settings(BaseSettings):
 
     anthropic_api_key: str = ""
 
+    cors_origins: list[str] = ["http://localhost:3000"]
+
     celery_broker_url: str = "redis://localhost:6379/1"
     celery_result_backend: str = "redis://localhost:6379/2"
 
