@@ -109,3 +109,74 @@ export async function updateTarget(
 export async function deleteTarget(id: string): Promise<void> {
   return request<void>(`/targets/${id}`, { method: "DELETE" });
 }
+
+// Agent Scans
+export interface ProgressEvent {
+  node: string;
+  status: string;
+  message: string;
+  timestamp: string;
+}
+
+export interface AgentScan {
+  id: string;
+  status: string;
+  target_url: string;
+  target_type: string;
+  created_at: string;
+  progress_events: ProgressEvent[];
+  error: string | null;
+}
+
+export interface AgentFinding {
+  id: string;
+  category: string;
+  severity: "critical" | "high" | "medium" | "low" | "info";
+  title: string;
+  description: string;
+  remediation: string | null;
+  status: string;
+}
+
+export interface AgentFindingsResponse {
+  scan_id: string;
+  total: number;
+  findings: AgentFinding[];
+}
+
+export async function createAgentScan(data: {
+  target_id: string;
+  target_url: string;
+  target_type: string;
+  config?: Record<string, unknown>;
+}): Promise<AgentScan> {
+  return request<AgentScan>("/agent-scans", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getAgentScan(id: string): Promise<AgentScan> {
+  return request<AgentScan>(`/agent-scans/${id}`);
+}
+
+export async function getAgentScanFindings(
+  id: string,
+  severity?: string
+): Promise<AgentFindingsResponse> {
+  const qs = severity ? `?severity=${severity}` : "";
+  return request<AgentFindingsResponse>(`/agent-scans/${id}/findings${qs}`);
+}
+
+export function connectAgentScanWS(
+  scanId: string,
+  onEvent: (event: ProgressEvent | { node: string; status: string; message: string; error?: string }) => void
+): WebSocket {
+  const wsBase = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1")
+    .replace(/^http/, "ws");
+  const ws = new WebSocket(`${wsBase}/agent-scans/ws/${scanId}`);
+  ws.onmessage = (e) => {
+    try { onEvent(JSON.parse(e.data)); } catch { /* ignore malformed */ }
+  };
+  return ws;
+}

@@ -22,6 +22,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const navItems = [
     { href: "/dashboard", label: "Overview" },
     { href: "/targets", label: "Targets" },
+    { href: "/agent-scans", label: "Agent Scans" },
   ];
 
   return (
