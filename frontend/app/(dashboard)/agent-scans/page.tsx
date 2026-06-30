@@ -7,6 +7,7 @@ import {
   ProgressEvent,
   connectAgentScanWS,
   createAgentScan,
+  getAgentScan,
   getAgentScanFindings,
   listTargets,
   patchFinding,
@@ -209,7 +210,20 @@ export default function AgentScansPage() {
       }
       setEvents((prev) => [...prev, event as ProgressEvent]);
     });
+    ws.onclose = () => pollUntilDone(scanId);
     wsRef.current = ws;
+  }
+
+  async function pollUntilDone(scanId: string) {
+    for (let i = 0; i < 30; i++) {
+      await new Promise((r) => setTimeout(r, 3000));
+      try {
+        const scan = await getAgentScan(scanId);
+        setActiveScan(scan);
+        if (scan.status === "completed") { loadFindings(scanId); return; }
+        if (scan.status === "failed") return;
+      } catch { return; }
+    }
   }
 
   async function loadFindings(scanId: string) {
