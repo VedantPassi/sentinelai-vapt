@@ -12,6 +12,9 @@ class FindingData:
     poc_evidence: str | None = None
     remediation: str | None = None
     raw: dict[str, Any] = field(default_factory=dict)
+    status: str = "open"  # open | confirmed | false_positive
+    risk_score: int = 0
+    validation_reasoning: str = ""
 
 
 @dataclass
