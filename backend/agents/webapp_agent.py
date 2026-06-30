@@ -5,10 +5,9 @@ import logging
 from datetime import datetime, timezone
 
 import json
-import anthropic
 
 from agents.state import AgentState, ProgressEvent
-from core.config import settings
+from core.llm import LLMError, llm_complete
 from scanners.base import FindingData
 from scanners import nuclei_scanner, zap_scanner
 
@@ -91,10 +90,6 @@ async def _enrich(findings: list[FindingData], state: AgentState) -> list[Findin
     if not findings:
         return []
 
-    if not settings.anthropic_api_key:
-        logger.warning("No API key — skipping Claude enrichment")
-        return findings
-
     plan = state.get("attack_plan")
     plan_summary = plan.summary if plan else "No attack plan available"
 
@@ -111,13 +106,7 @@ async def _enrich(findings: list[FindingData], state: AgentState) -> list[Findin
     )
 
     try:
-        client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
-        message = await client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=4096,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        raw = message.content[0].text
+        raw = await llm_complete(prompt)
         start = raw.find("[")
         end = raw.rfind("]") + 1
         data = json.loads(raw[start:end])
@@ -133,6 +122,9 @@ async def _enrich(findings: list[FindingData], state: AgentState) -> list[Findin
                 raw={"mitre_id": item.get("mitre_id")},
             ))
         return enriched
+    except LLMError as exc:
+        logger.warning("LLM enrichment skipped: %s", exc)
+        return findings
     except Exception as exc:
-        logger.error("Claude enrichment failed: %s", exc)
+        logger.error("Enrichment parse failed: %s", exc)
         return findings

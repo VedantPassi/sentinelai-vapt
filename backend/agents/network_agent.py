@@ -5,10 +5,8 @@ import json
 import logging
 from datetime import datetime, timezone
 
-import anthropic
-
 from agents.state import AgentState, ProgressEvent
-from core.config import settings
+from core.llm import LLMError, llm_complete
 from scanners.base import FindingData
 from scanners import gitleaks_scanner, nmap_scanner
 
@@ -93,10 +91,6 @@ async def _map_cves(findings: list[FindingData], state: AgentState) -> list[Find
     if not findings:
         return []
 
-    if not settings.anthropic_api_key:
-        logger.warning("No API key — skipping CVE mapping")
-        return findings
-
     services_json = json.dumps([
         {"port": f.raw.get("port"), "service": f.raw.get("service"),
          "version": f.raw.get("version"), "host": f.raw.get("host")}
@@ -106,13 +100,7 @@ async def _map_cves(findings: list[FindingData], state: AgentState) -> list[Find
     prompt = _CVE_PROMPT.format(url=state["target_url"], services_json=services_json)
 
     try:
-        client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
-        message = await client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=2048,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        raw = message.content[0].text
+        raw = await llm_complete(prompt)
         start = raw.find("[")
         end = raw.rfind("]") + 1
         data = json.loads(raw[start:end])
@@ -129,6 +117,9 @@ async def _map_cves(findings: list[FindingData], state: AgentState) -> list[Find
                      "mitre_id": item.get("mitre_id")},
             ))
         return enriched
+    except LLMError as exc:
+        logger.warning("LLM CVE mapping skipped: %s", exc)
+        return findings
     except Exception as exc:
-        logger.error("CVE mapping failed: %s", exc)
+        logger.error("CVE mapping parse failed: %s", exc)
         return findings

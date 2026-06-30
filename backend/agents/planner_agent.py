@@ -4,10 +4,8 @@ import json
 import logging
 from datetime import datetime, timezone
 
-import anthropic
-
 from agents.state import AgentState, AttackPlan, AttackVector, ProgressEvent
-from core.config import settings
+from core.llm import LLMError, llm_complete
 
 logger = logging.getLogger(__name__)
 
@@ -51,17 +49,6 @@ async def run(state: AgentState) -> AgentState:
     state["current_node"] = "planner"
     state["progress_events"].append(_event("started", "Attack planner starting"))
 
-    if not settings.anthropic_api_key:
-        logger.warning("ANTHROPIC_API_KEY not set — skipping attack planning")
-        state["attack_plan"] = AttackPlan(
-            summary="Skipped — no API key configured",
-            vectors=[],
-        )
-        state["progress_events"].append(
-            _event("completed", "Attack plan skipped — ANTHROPIC_API_KEY not set")
-        )
-        return state
-
     recon = state.get("recon_data")
     techs = ", ".join(recon.technologies) if recon and recon.technologies else "unknown"
     subs = ", ".join(recon.subdomains[:10]) if recon and recon.subdomains else "none"
@@ -75,18 +62,11 @@ async def run(state: AgentState) -> AgentState:
     )
 
     try:
-        client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
-        message = await client.messages.create(
-            model="claude-opus-4-8",
-            max_tokens=1024,
-            system=_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        raw = message.content[0].text
+        raw = await llm_complete(prompt, system=_SYSTEM_PROMPT, model_tier="reasoning")
         plan = _parse_plan(raw)
-    except Exception as exc:
-        logger.error("Planner Claude API error: %s", exc)
-        plan = AttackPlan(summary=f"Planning failed: {exc}", vectors=[])
+    except LLMError as exc:
+        logger.warning("Planner LLM unavailable: %s", exc)
+        plan = AttackPlan(summary=f"Skipped — {exc}", vectors=[])
 
     state["attack_plan"] = plan
     state["progress_events"].append(
