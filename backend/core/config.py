@@ -20,6 +20,10 @@ class Settings(BaseSettings):
 
     anthropic_api_key: str = ""
 
+    llm_provider: str = "ollama"  # "ollama" | "anthropic"
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str = "qwen2.5:7b"
+
     cors_origins: list[str] = ["http://localhost:3000"]
 
     celery_broker_url: str = "redis://localhost:6379/1"
