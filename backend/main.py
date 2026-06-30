@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from api.v1.agent_scans import router as agent_scans_router
 from api.v1.auth import router as auth_router
+from api.v1.findings import router as findings_router
 from api.v1.health import router as health_router
 from api.v1.reports import router as reports_router
 from api.v1.scans import router as scans_router
