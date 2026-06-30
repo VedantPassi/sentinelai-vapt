@@ -18,7 +18,11 @@ celery_app.conf.result_serializer = "json"
 
 @celery_app.task(name="workers.agent_worker.run_agent_task", bind=True, max_retries=1)
 def run_agent_task(self, scan_id: str, target_url: str, target_type: str, config: dict) -> dict:
-    return asyncio.run(_run(scan_id, target_url, target_type, config))
+    loop = asyncio.new_event_loop()
+    try:
+        return loop.run_until_complete(_run(scan_id, target_url, target_type, config))
+    finally:
+        loop.close()
 
 
 async def _run(scan_id: str, target_url: str, target_type: str, config: dict) -> dict:
