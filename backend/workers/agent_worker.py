@@ -28,7 +28,8 @@ async def _run(scan_id: str, target_url: str, target_type: str, config: dict) ->
 
     from agents.runtime import run_agent_scan
     from core.db import AsyncSessionLocal
-    from models.models import Finding, ScanJob
+    from models.models import Finding, ScanJob, Target
+    from scoring.srs import compute_srs
 
     async with AsyncSessionLocal() as db:
         result = await db.execute(select(ScanJob).where(ScanJob.id == uuid.UUID(scan_id)))
@@ -70,7 +71,12 @@ async def _run(scan_id: str, target_url: str, target_type: str, config: dict) ->
                        "error": final_state.get("error")}
         await db.commit()
 
+        target_result = await db.execute(select(Target).where(Target.id == scan.target_id))
+        target = target_result.scalar_one_or_none()
+        asset_score = ((target.asset_criticality or 1) - 1) * 25 if target else 0
+
         for fd in final_state.get("findings", []):
+            fd_status = fd.status if fd.status in ("confirmed", "false_positive") else "open"
             finding = Finding(
                 id=uuid.uuid4(),
                 scan_id=uuid.UUID(scan_id),
@@ -78,11 +84,11 @@ async def _run(scan_id: str, target_url: str, target_type: str, config: dict) ->
                 severity=fd.severity,
                 title=fd.title,
                 description=fd.description,
-                srs_score=fd.srs_score,
+                srs_score=compute_srs(fd.severity, fd.risk_score, asset_score, fd_status),
                 poc_evidence=fd.poc_evidence,
                 remediation=fd.remediation,
-                status="open",
-                confirmed=False,
+                status=fd_status,
+                confirmed=fd_status == "confirmed",
             )
             db.add(finding)
         await db.commit()
