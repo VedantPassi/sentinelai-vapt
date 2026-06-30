@@ -59,7 +59,7 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 | 2 | Scanning Engine Core | ✅ Complete |
 | 2 | Scanning Engine Core | ✅ Complete |
 | 3 | AI Agent Framework | ✅ Complete |
-| 4 | Validation & Risk Scoring | ⬜ Not Started |
+| 4 | Validation & Risk Scoring | ✅ Complete |
 | 5 | Reporting & Integrations | ⬜ Not Started |
 | 6 | Advanced Modules (Cloud/K8s) | ⬜ Not Started |
 | 7 | Enterprise Features | ⬜ Not Started |
@@ -104,32 +104,36 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 **Phase:** 4 — Validation & Risk Scoring
 
 **What was done:**
-- LLM abstraction layer built ✅:
-  - `backend/core/llm.py` — `llm_complete()` supports Ollama + Anthropic via `LLM_PROVIDER` env var, 1 retry on timeout, `LLMError` on failure
-  - `backend/core/config.py` — added `llm_provider`, `ollama_base_url`, `ollama_model` settings
-  - `.env` updated: `LLM_PROVIDER=ollama`, `OLLAMA_BASE_URL=http://localhost:11434`, `OLLAMA_MODEL=qwen2.5:7b`
-- All 3 Phase 3 agents migrated to `llm_complete()` ✅:
-  - `backend/agents/planner_agent.py` — removed inline Anthropic client
-  - `backend/agents/webapp_agent.py` — removed inline Anthropic client
-  - `backend/agents/network_agent.py` — removed inline Anthropic client
-- Ollama installed, `qwen2.5:7b` pulled (4.7GB, M5 MacBook, 11.8 GiB VRAM)
-- WebSocket URL verified correct — no fix needed
+- Phase 4 COMPLETE ✅ — all features built, tested e2e
+- `backend/core/llm.py` — `llm_complete()`, Ollama + Anthropic, 1 retry, `LLMError`
+- All 3 Phase 3 agents migrated to `llm_complete()` (no inline Anthropic calls)
+- `backend/agents/validation_agent.py` — batched LLM validation, rules pre-filter, status/risk_score/reasoning set
+- `backend/agents/runtime.py` — `validator` node wired: webapp|network → validator → END
+- `backend/scoring/srs.py` — SRS formula (severity 40% + exploitability 30% + asset 20% + confidence 10%)
+- `backend/scoring/classifier.py` — 6 deterministic FP rules (info severity, missing-header on non-web, noise titles, Nuclei tech-detect, zero risk + low, short description)
+- `backend/workers/agent_worker.py` — reads fd.status/risk_score, computes SRS, writes to DB; fixed asyncio.run() → new_event_loop(); fixed asset_criticality float mapping
+- `backend/api/v1/findings.py` — GET/PATCH/POST validate endpoints; tenant isolation via Finding→ScanJob→Target join
+- `backend/models/models.py` — `validation_reasoning` column added to Finding
+- Alembic migration `3155935e555c` — two-step NOT NULL migration
+- `frontend/lib/api.ts` — `getFinding`, `patchFinding`, `revalidateFinding` + extended `AgentFinding` type
+- `frontend/app/(dashboard)/agent-scans/page.tsx` — `FindingCard` with SRS badge, status badge, reasoning, Confirm/FP/Re-validate buttons
+- Phase 4 audit report + phase report generated ✅
+- 3 bugs fixed: asyncio.run() in Celery, asset_criticality float mapping, migration NOT NULL
 
 **Decisions made:**
-- LLM: Ollama (`qwen2.5:7b`) for Phase 4 dev/testing, Anthropic for production
-- Switch via `LLM_PROVIDER` env var — no code change needed
-- `llm_complete()` has 1 retry on timeout, raises `LLMError` on failure — agents skip enrichment gracefully
+- Ollama `qwen2.5:7b` for dev; switch to Anthropic via `LLM_PROVIDER=anthropic` for prod
+- Validation: rules-first (classifier), then LLM batch (≤10/call)
+- `POST /validate` runs LLM sync in request (~2s on Ollama) — no Celery for single finding
+- FP `srs_score` always 0 regardless of severity
 
 **Blockers:** None
 
-**Next session should (Phase 4 remaining):**
-1. Get `validation_agent.py` design proposal from CLI, CTO approves, CTO writes file
-2. `backend/scoring/srs.py` — SRS risk scoring formula (0–10, factors: severity + exploitability + asset criticality)
-3. `backend/scoring/classifier.py` — false-positive filter (rules-based + LLM-assisted)
-4. `backend/agents/chain_agent.py` — chain discovery v1
-5. API: POST `/findings/{id}/validate`, GET `/findings/{id}`, PATCH `/findings/{id}`
-6. Frontend: finding detail view + confirm/FP buttons
-7. Phase 4 audit + reports
+**Next session — Phase 5:**
+- `backend/agents/chain_agent.py` — attack chain discovery (deferred from Phase 4)
+- Real-time WebSocket streaming (Redis streams, not DB poll)
+- WebSocket auth
+- Reporting improvements (PDF + SARIF export)
+- Integrations (Jira, Slack)
 
 ---
 
