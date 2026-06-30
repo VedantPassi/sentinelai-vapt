@@ -9,6 +9,7 @@ def build_graph() -> StateGraph:
     from agents.network_agent import run as network_run
     from agents.planner_agent import run as planner_run
     from agents.recon_agent import run as recon_run
+    from agents.validation_agent import run as validator_run
     from agents.webapp_agent import run as webapp_run
 
     graph = StateGraph(AgentState)
@@ -17,6 +18,7 @@ def build_graph() -> StateGraph:
     graph.add_node("planner", planner_run)
     graph.add_node("webapp", webapp_run)
     graph.add_node("network", network_run)
+    graph.add_node("validator", validator_run)
 
     graph.set_entry_point("recon")
     graph.add_edge("recon", "planner")
@@ -29,8 +31,9 @@ def build_graph() -> StateGraph:
             "end": END,
         },
     )
-    graph.add_edge("webapp", END)
-    graph.add_edge("network", END)
+    graph.add_edge("webapp", "validator")
+    graph.add_edge("network", "validator")
+    graph.add_edge("validator", END)
 
     return graph
 
