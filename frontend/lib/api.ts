@@ -136,6 +136,39 @@ export interface AgentFinding {
   description: string;
   remediation: string | null;
   status: string;
+  srs_score: number | null;
+  validation_reasoning: string;
+  confirmed: boolean;
+}
+
+export interface FindingDetail extends AgentFinding {
+  scan_id: string;
+  poc_evidence: string | null;
+}
+
+export interface FindingUpdate {
+  status?: "open" | "confirmed" | "false_positive" | "fixed";
+  remediation?: string;
+}
+
+export async function getFinding(id: string): Promise<FindingDetail> {
+  return request<FindingDetail>(`/findings/${id}`);
+}
+
+export async function patchFinding(
+  id: string,
+  data: FindingUpdate
+): Promise<FindingDetail> {
+  return request<FindingDetail>(`/findings/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function revalidateFinding(id: string): Promise<FindingDetail> {
+  return request<FindingDetail>(`/findings/${id}/validate`, {
+    method: "POST",
+  });
 }
 
 export interface AgentFindingsResponse {

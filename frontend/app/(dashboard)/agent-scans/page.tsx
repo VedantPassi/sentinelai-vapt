@@ -9,6 +9,8 @@ import {
   createAgentScan,
   getAgentScanFindings,
   listTargets,
+  patchFinding,
+  revalidateFinding,
   Target,
 } from "@/lib/api";
 
@@ -26,6 +28,130 @@ const STATUS_COLOR: Record<string, string> = {
   completed: "text-green-600",
   failed: "text-red-600",
 };
+
+function srsColor(score: number | null): string {
+  if (score === null) return "bg-gray-100 text-gray-500";
+  if (score >= 70) return "bg-red-100 text-red-700";
+  if (score >= 40) return "bg-orange-100 text-orange-700";
+  return "bg-gray-100 text-gray-500";
+}
+
+function FindingStatusBadge({ status }: { status: string }) {
+  if (status === "confirmed")
+    return <span className="text-xs font-semibold px-2 py-0.5 rounded bg-green-100 text-green-700">CONFIRMED</span>;
+  if (status === "false_positive")
+    return <span className="text-xs font-semibold px-2 py-0.5 rounded bg-red-100 text-red-500 line-through">FALSE POSITIVE</span>;
+  if (status === "fixed")
+    return <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 text-blue-600">FIXED</span>;
+  return <span className="text-xs font-semibold px-2 py-0.5 rounded bg-gray-100 text-gray-500">OPEN</span>;
+}
+
+function FindingCard({
+  finding,
+  onUpdate,
+}: {
+  finding: AgentFinding;
+  onUpdate: (updated: AgentFinding) => void;
+}) {
+  const [revalidating, setRevalidating] = useState(false);
+  const [patching, setPatching] = useState<string | null>(null);
+  const [showReasoning, setShowReasoning] = useState(false);
+
+  async function handlePatch(newStatus: "confirmed" | "false_positive") {
+    setPatching(newStatus);
+    const optimistic = { ...finding, status: newStatus, confirmed: newStatus === "confirmed" };
+    onUpdate(optimistic);
+    try {
+      const updated = await patchFinding(finding.id, { status: newStatus });
+      onUpdate({ ...finding, ...updated });
+    } catch {
+      onUpdate(finding); // revert
+    } finally {
+      setPatching(null);
+    }
+  }
+
+  async function handleRevalidate() {
+    setRevalidating(true);
+    try {
+      const updated = await revalidateFinding(finding.id);
+      onUpdate({ ...finding, ...updated });
+    } catch { /* non-critical */ }
+    finally {
+      setRevalidating(false);
+    }
+  }
+
+  const canAct = finding.status === "open" || finding.status === "confirmed";
+
+  return (
+    <div className="border rounded p-3 space-y-2">
+      <div className="flex items-start gap-2">
+        <span className={`text-xs font-semibold px-2 py-0.5 rounded shrink-0 ${SEVERITY_COLOR[finding.severity] ?? ""}`}>
+          {finding.severity.toUpperCase()}
+        </span>
+        <span className="font-medium text-sm flex-1">{finding.title}</span>
+        <div className="flex items-center gap-2 shrink-0">
+          {finding.srs_score !== null && finding.srs_score !== undefined && (
+            <span className={`text-xs font-mono px-2 py-0.5 rounded ${srsColor(finding.srs_score)}`}>
+              SRS: {finding.srs_score}
+            </span>
+          )}
+          <FindingStatusBadge status={finding.status} />
+          <span className="text-xs text-gray-400">{finding.category}</span>
+        </div>
+      </div>
+
+      <p className="text-sm text-gray-600">{finding.description}</p>
+
+      {finding.validation_reasoning && (
+        <div>
+          <button
+            onClick={() => setShowReasoning((v) => !v)}
+            className="text-xs text-gray-400 hover:text-gray-600"
+          >
+            {showReasoning ? "▾ Hide reasoning" : "▸ Show reasoning"}
+          </button>
+          {showReasoning && (
+            <p className="text-xs text-gray-500 italic mt-1">{finding.validation_reasoning}</p>
+          )}
+        </div>
+      )}
+
+      {finding.remediation && (
+        <p className="text-xs text-gray-500">
+          <span className="font-medium">Fix:</span> {finding.remediation}
+        </p>
+      )}
+
+      {canAct && (
+        <div className="flex items-center gap-2 pt-1">
+          <button
+            onClick={() => handlePatch("confirmed")}
+            disabled={!!patching || revalidating || finding.status === "confirmed"}
+            className="text-xs px-2 py-1 rounded bg-green-50 text-green-700 hover:bg-green-100 disabled:opacity-40 font-medium"
+          >
+            ✓ Confirm
+          </button>
+          <button
+            onClick={() => handlePatch("false_positive")}
+            disabled={!!patching || revalidating}
+            className="text-xs px-2 py-1 rounded bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-40 font-medium"
+          >
+            ✗ False Positive
+          </button>
+          <button
+            onClick={handleRevalidate}
+            disabled={revalidating || !!patching}
+            className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-40 font-medium"
+          >
+            {revalidating ? "↻ Validating…" : "↻ Re-validate"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function AgentScansPage() {
   const [targets, setTargets] = useState<Target[]>([]);
@@ -93,6 +219,10 @@ export default function AgentScansPage() {
     } catch { /* non-critical */ }
   }
 
+  function updateFinding(updated: AgentFinding) {
+    setFindings((prev) => prev.map((f) => f.id === updated.id ? updated : f));
+  }
+
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <h1 className="text-2xl font-bold">AI Agent Scans</h1>
@@ -154,7 +284,6 @@ export default function AgentScansPage() {
           </div>
           <p className="text-xs text-gray-400 font-mono">{activeScan.id}</p>
 
-          {/* Event stream */}
           <div className="bg-gray-950 rounded p-3 h-48 overflow-y-auto font-mono text-xs space-y-1">
             {events.length === 0 && (
               <p className="text-gray-500">Waiting for events…</p>
@@ -183,21 +312,7 @@ export default function AgentScansPage() {
           </h2>
           <div className="space-y-2">
             {findings.map((f) => (
-              <div key={f.id} className="border rounded p-3 space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded ${SEVERITY_COLOR[f.severity] ?? ""}`}>
-                    {f.severity.toUpperCase()}
-                  </span>
-                  <span className="font-medium text-sm">{f.title}</span>
-                  <span className="text-xs text-gray-400 ml-auto">{f.category}</span>
-                </div>
-                <p className="text-sm text-gray-600">{f.description}</p>
-                {f.remediation && (
-                  <p className="text-xs text-gray-500">
-                    <span className="font-medium">Fix:</span> {f.remediation}
-                  </p>
-                )}
-              </div>
+              <FindingCard key={f.id} finding={f} onUpdate={updateFinding} />
             ))}
           </div>
         </div>
