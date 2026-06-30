@@ -73,7 +73,7 @@ async def _run(scan_id: str, target_url: str, target_type: str, config: dict) ->
 
         target_result = await db.execute(select(Target).where(Target.id == scan.target_id))
         target = target_result.scalar_one_or_none()
-        asset_score = ((target.asset_criticality or 1) - 1) * 25 if target else 0
+        asset_score = round((target.asset_criticality or 0.0) * 100) if target else 0
 
         for fd in final_state.get("findings", []):
             fd_status = fd.status if fd.status in ("confirmed", "false_positive") else "open"
