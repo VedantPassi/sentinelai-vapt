@@ -106,6 +106,7 @@ class Finding(Base):
     confirmed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     poc_evidence: Mapped[str | None] = mapped_column(Text, nullable=True)
     remediation: Mapped[str | None] = mapped_column(Text, nullable=True)
+    validation_reasoning: Mapped[str] = mapped_column(Text, nullable=False, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     scan_job: Mapped["ScanJob"] = relationship("ScanJob", back_populates="findings")
