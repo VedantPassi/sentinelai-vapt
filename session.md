@@ -64,7 +64,7 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 | 6 | Advanced Modules (Cloud/K8s) | ⬜ Not Started |
 | 7 | Enterprise Features | ⬜ Not Started |
 
-**Current Phase: 3**
+**Current Phase: 4**
 
 ---
 
@@ -99,55 +99,37 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 
 ## Current Session Log
 
-**Session #:** 5–6 (complete)
-**Date:** 2026-06-28 to 2026-06-30
-**Phase:** 3 — AI Agent Framework
+**Session #:** 7
+**Date:** 2026-06-30
+**Phase:** 4 — Validation & Risk Scoring
 
 **What was done:**
-- All Phase 3 agent files written + syntax verified ✅:
-  - `backend/agents/state.py` — AgentState TypedDict, ReconData, AttackPlan, AttackVector, ProgressEvent
-  - `backend/agents/runtime.py` — LangGraph graph (recon→planner→webapp|network), lazy compile, `run_agent_scan()` entry point
-  - `backend/agents/recon_agent.py` — async DNS lookup (run_in_executor), subdomain enum, HTTP fingerprint
-  - `backend/agents/planner_agent.py` — Claude Opus 4.8 attack planning, MITRE ATT&CK vectors, graceful no-key fallback
-  - `backend/agents/webapp_agent.py` — parallel ZAP + Nuclei, Claude sonnet-4-6 enrichment
-  - `backend/agents/network_agent.py` — Nmap + optional Gitleaks, Claude CVE mapping
-  - `backend/workers/agent_worker.py` — Celery task wrapping run_agent_scan, stores findings in DB
-  - `backend/api/v1/agent_scans.py` — POST /agent-scans, GET /{id}, GET /{id}/findings, WS /ws/{id}
-- `main.py` updated — agent_scans_router wired ✅
-- Live e2e test: POST /agent-scans → Celery → LangGraph → Nmap → 4 findings stored ✅
-- Two full audit rounds run — all findings fixed ✅:
-  - `await db.delete()` → `db.delete()` (sync call)
-  - dnspython + fpdf2 added to pyproject.toml
-  - ScanJob.created_at added + Alembic migration applied
-  - CORS hardcoded origins → settings.cors_origins
-  - agent_scans.py created_at fallback uses model fields (no datetime.now())
-  - reports.py bytes(pdf.output()) → pdf.output()
-  - scans.py run_scan moved to top-level import
-  - deps.py uuid.UUID parse guarded with try/except → 401
-  - auth.py password minimum length (8 chars) enforced
-  - zap_scanner.py /tmp/zap hardcoded path → uuid-based per-scan dir
+- LLM abstraction layer built ✅:
+  - `backend/core/llm.py` — `llm_complete()` supports Ollama + Anthropic via `LLM_PROVIDER` env var, 1 retry on timeout, `LLMError` on failure
+  - `backend/core/config.py` — added `llm_provider`, `ollama_base_url`, `ollama_model` settings
+  - `.env` updated: `LLM_PROVIDER=ollama`, `OLLAMA_BASE_URL=http://localhost:11434`, `OLLAMA_MODEL=qwen2.5:7b`
+- All 3 Phase 3 agents migrated to `llm_complete()` ✅:
+  - `backend/agents/planner_agent.py` — removed inline Anthropic client
+  - `backend/agents/webapp_agent.py` — removed inline Anthropic client
+  - `backend/agents/network_agent.py` — removed inline Anthropic client
+- Ollama installed, `qwen2.5:7b` pulled (4.7GB, M5 MacBook, 11.8 GiB VRAM)
+- WebSocket URL verified correct — no fix needed
 
 **Decisions made:**
-- WebSocket progress: DB polling — Redis stream Phase 5
-- Tenant isolation: Target join pattern (no org_id on ScanJob)
-- claude-opus-4-8 for planner, claude-sonnet-4-6 for enrichment
-- WS endpoint no auth — Phase 5 fix
-- ANTHROPIC_API_KEY empty → graceful skip, scanners still run
+- LLM: Ollama (`qwen2.5:7b`) for Phase 4 dev/testing, Anthropic for production
+- Switch via `LLM_PROVIDER` env var — no code change needed
+- `llm_complete()` has 1 retry on timeout, raises `LLMError` on failure — agents skip enrichment gracefully
 
-- Frontend live test: scan launcher → WebSocket → 4 findings rendered in browser ✅
-- Generated reports: `phase-reports/phase-3-report.md`, `IMP info/reports/phase-3-audit.md`, `IMP info/audit-findings-phase3.md` ✅
-- Phase 3 marked complete ✅
+**Blockers:** None
 
-**Blockers:**
-- ANTHROPIC_API_KEY not in .env — Claude enrichment skips (non-blocking for Phase 4)
-
-**Next session should:**
-1. Update Current Phase to 4 in this file
-2. Add ANTHROPIC_API_KEY to .env
-3. Start Phase 4 — Validation & Risk Scoring:
-   - SRS (Security Risk Score) scoring formula
-   - Validation Agent (PoC confirmation via Claude)
-   - False-positive classifier
+**Next session should (Phase 4 remaining):**
+1. Get `validation_agent.py` design proposal from CLI, CTO approves, CTO writes file
+2. `backend/scoring/srs.py` — SRS risk scoring formula (0–10, factors: severity + exploitability + asset criticality)
+3. `backend/scoring/classifier.py` — false-positive filter (rules-based + LLM-assisted)
+4. `backend/agents/chain_agent.py` — chain discovery v1
+5. API: POST `/findings/{id}/validate`, GET `/findings/{id}`, PATCH `/findings/{id}`
+6. Frontend: finding detail view + confirm/FP buttons
+7. Phase 4 audit + reports
 
 ---
 
