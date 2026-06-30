@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import asyncio
 import uuid
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
 
 from celery import Celery
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from core.config import settings
 
@@ -16,13 +19,27 @@ celery_app.conf.task_serializer = "json"
 celery_app.conf.result_serializer = "json"
 
 
+@asynccontextmanager
+async def _make_session() -> AsyncGenerator[AsyncSession, None]:
+    """Create a fresh engine + session bound to the current event loop."""
+    engine = create_async_engine(settings.database_url, echo=False)
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    async with factory() as session:
+        try:
+            yield session
+        finally:
+            await engine.dispose()
+
+
 @celery_app.task(name="workers.agent_worker.run_agent_task", bind=True, max_retries=1)
 def run_agent_task(self, scan_id: str, target_url: str, target_type: str, config: dict) -> dict:
     loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     try:
         return loop.run_until_complete(_run(scan_id, target_url, target_type, config))
     finally:
         loop.close()
+        asyncio.set_event_loop(None)
 
 
 async def _run(scan_id: str, target_url: str, target_type: str, config: dict) -> dict:
@@ -31,11 +48,10 @@ async def _run(scan_id: str, target_url: str, target_type: str, config: dict) ->
     from sqlalchemy import select
 
     from agents.runtime import run_agent_scan
-    from core.db import AsyncSessionLocal
     from models.models import Finding, ScanJob, Target
     from scoring.srs import compute_srs
 
-    async with AsyncSessionLocal() as db:
+    async with _make_session() as db:
         result = await db.execute(select(ScanJob).where(ScanJob.id == uuid.UUID(scan_id)))
         scan = result.scalar_one_or_none()
         if not scan:
@@ -49,7 +65,7 @@ async def _run(scan_id: str, target_url: str, target_type: str, config: dict) ->
     try:
         final_state = await run_agent_scan(scan_id, target_url, target_type, config)
     except Exception as exc:
-        async with AsyncSessionLocal() as db:
+        async with _make_session() as db:
             result = await db.execute(select(ScanJob).where(ScanJob.id == uuid.UUID(scan_id)))
             scan = result.scalar_one_or_none()
             if scan:
@@ -59,7 +75,7 @@ async def _run(scan_id: str, target_url: str, target_type: str, config: dict) ->
                 await db.commit()
         return {"error": str(exc)}
 
-    async with AsyncSessionLocal() as db:
+    async with _make_session() as db:
         result = await db.execute(select(ScanJob).where(ScanJob.id == uuid.UUID(scan_id)))
         scan = result.scalar_one_or_none()
         if not scan:
