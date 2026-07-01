@@ -189,6 +189,7 @@ async def agent_scan_ws(
                 break
 
             await asyncio.sleep(2)
+            await db.expire_all()
 
     except WebSocketDisconnect:
         pass
