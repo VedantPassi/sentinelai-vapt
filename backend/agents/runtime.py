@@ -6,6 +6,7 @@ from agents.state import AgentState
 
 
 def build_graph() -> StateGraph:
+    from agents.chain_agent import run as chain_run
     from agents.network_agent import run as network_run
     from agents.planner_agent import run as planner_run
     from agents.recon_agent import run as recon_run
@@ -19,6 +20,7 @@ def build_graph() -> StateGraph:
     graph.add_node("webapp", webapp_run)
     graph.add_node("network", network_run)
     graph.add_node("validator", validator_run)
+    graph.add_node("chain", chain_run)
 
     graph.set_entry_point("recon")
     graph.add_edge("recon", "planner")
@@ -33,7 +35,8 @@ def build_graph() -> StateGraph:
     )
     graph.add_edge("webapp", "validator")
     graph.add_edge("network", "validator")
-    graph.add_edge("validator", END)
+    graph.add_edge("validator", "chain")
+    graph.add_edge("chain", END)
 
     return graph
 
@@ -66,6 +69,7 @@ async def run_agent_scan(scan_id: str, target_url: str, target_type: str, config
         "recon_data": None,
         "attack_plan": None,
         "findings": [],
+        "attack_chains": [],
         "current_node": "start",
         "progress_events": [],
         "error": None,

@@ -42,6 +42,25 @@ class ProgressEvent:
     )
 
 
+@dataclass
+class ChainStep:
+    step: int
+    action: str
+    mitre_id: str
+    finding_id: str | None = None
+
+
+@dataclass
+class AttackChain:
+    title: str
+    description: str
+    impact: str  # critical | high | medium | low
+    likelihood: str  # high | medium | low
+    mitre_ids: list[str] = field(default_factory=list)
+    finding_ids: list[str] = field(default_factory=list)
+    steps: list[ChainStep] = field(default_factory=list)
+
+
 class AgentState(TypedDict):
     scan_id: str
     target_url: str
@@ -50,6 +69,7 @@ class AgentState(TypedDict):
     recon_data: ReconData | None
     attack_plan: AttackPlan | None
     findings: list[FindingData]
+    attack_chains: list[AttackChain]
     current_node: str
     progress_events: list[ProgressEvent]
     error: str | None

@@ -82,6 +82,7 @@ class ScanJob(Base):
 
     target: Mapped["Target"] = relationship("Target", back_populates="scan_jobs")
     findings: Mapped[list["Finding"]] = relationship("Finding", back_populates="scan_job")
+    attack_chains: Mapped[list["AttackChain"]] = relationship("AttackChain", back_populates="scan_job")
 
 
 class Finding(Base):
@@ -110,3 +111,22 @@ class Finding(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     scan_job: Mapped["ScanJob"] = relationship("ScanJob", back_populates="findings")
+
+
+class AttackChain(Base):
+    __tablename__ = "attack_chains"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    scan_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("scan_jobs.id", ondelete="CASCADE"), nullable=False
+    )
+    title: Mapped[str] = mapped_column(String(512), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    impact: Mapped[str] = mapped_column(String(50), nullable=False, default="medium")
+    likelihood: Mapped[str] = mapped_column(String(50), nullable=False, default="medium")
+    mitre_ids: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    finding_ids: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    steps: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    scan_job: Mapped["ScanJob"] = relationship("ScanJob", back_populates="attack_chains")
