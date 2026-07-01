@@ -98,41 +98,34 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 
 ## Current Session Log
 
-**Session #:** 7
-**Date:** 2026-06-30
-**Phase:** 4 — Validation & Risk Scoring
+**Session #:** 8
+**Date:** 2026-07-01
+**Phase:** 5 — Reporting & Integrations
 
 **What was done:**
-- Phase 4 COMPLETE ✅ — all features built, tested e2e
-- `backend/core/llm.py` — `llm_complete()`, Ollama + Anthropic, 1 retry, `LLMError`
-- All 3 Phase 3 agents migrated to `llm_complete()` (no inline Anthropic calls)
-- `backend/agents/validation_agent.py` — batched LLM validation, rules pre-filter, status/risk_score/reasoning set
-- `backend/agents/runtime.py` — `validator` node wired: webapp|network → validator → END
-- `backend/scoring/srs.py` — SRS formula (severity 40% + exploitability 30% + asset 20% + confidence 10%)
-- `backend/scoring/classifier.py` — 6 deterministic FP rules (info severity, missing-header on non-web, noise titles, Nuclei tech-detect, zero risk + low, short description)
-- `backend/workers/agent_worker.py` — reads fd.status/risk_score, computes SRS, writes to DB; fixed asyncio.run() → new_event_loop(); fixed asset_criticality float mapping
-- `backend/api/v1/findings.py` — GET/PATCH/POST validate endpoints; tenant isolation via Finding→ScanJob→Target join
-- `backend/models/models.py` — `validation_reasoning` column added to Finding
-- Alembic migration `3155935e555c` — two-step NOT NULL migration
-- `frontend/lib/api.ts` — `getFinding`, `patchFinding`, `revalidateFinding` + extended `AgentFinding` type
-- `frontend/app/(dashboard)/agent-scans/page.tsx` — `FindingCard` with SRS badge, status badge, reasoning, Confirm/FP/Re-validate buttons
-- Phase 4 audit report + phase report generated ✅
-- 3 bugs fixed: asyncio.run() in Celery, asset_criticality float mapping, migration NOT NULL
+- Fixed WS PENDING bug: `db.expire_all()` in WS polling loop (`api/v1/agent_scans.py`) — stale SQLAlchemy session cache was root cause ✅
+- Frontend polling fallback added (`pollUntilDone`) as secondary safety net ✅
+- E2e verified: scan completes, UI auto-updates to COMPLETED, findings + badges render ✅
+- Phase 5 P5-1 (chain_agent) started:
+  - `backend/agents/state.py` — `ChainStep`, `AttackChain` dataclasses + `attack_chains` in `AgentState`
+  - `backend/agents/chain_agent.py` — LLM chain discovery, top-20 confirmed findings, 1–5 chains output
+  - `backend/agents/runtime.py` — `chain` node wired: validator → chain → END
+  - `backend/models/models.py` — `AttackChain` DB model + ScanJob back-ref
+  - Alembic migration `cd775e0f3651` — `attack_chains` table live ✅
 
 **Decisions made:**
-- Ollama `qwen2.5:7b` for dev; switch to Anthropic via `LLM_PROVIDER=anthropic` for prod
-- Validation: rules-first (classifier), then LLM batch (≤10/call)
-- `POST /validate` runs LLM sync in request (~2s on Ollama) — no Celery for single finding
-- FP `srs_score` always 0 regardless of severity
+- Chain agent: reasoning tier LLM, cap 20 findings, 1–5 chains max
+- Tenant isolation: ScanJob join (no org_id on attack_chains) — consistent with Finding pattern
+- No Cytoscape.js frontend yet — API first, graph after e2e verified
 
 **Blockers:** None
 
-**Next session — Phase 5:**
-- `backend/agents/chain_agent.py` — attack chain discovery (deferred from Phase 4)
-- Real-time WebSocket streaming (Redis streams, not DB poll)
-- WebSocket auth
-- Reporting improvements (PDF + SARIF export)
-- Integrations (Jira, Slack)
+**Next session should (resume here):**
+1. CLI proposes `agent_worker.py` diff — write AttackChain rows to DB post-chain node
+2. CLI proposes `GET /agent-scans/{scan_id}/chains` endpoint diff — CTO approves + wires
+3. E2e test: launch scan, verify chains in DB + API
+4. Cytoscape.js frontend chain graph
+5. Then P5-2 (Redis streams WS), P5-3 (SARIF), P5-4 (PDF), P5-5 (Jira/Slack)
 
 ---
 
