@@ -135,6 +135,14 @@ async def _run(scan_id: str, target_url: str, target_type: str, config: dict) ->
             ))
         await db.commit()
 
+        from core.events import publish_scan_event
+        await publish_scan_event(scan_id, {
+            "node": "system",
+            "status": scan.status,
+            "message": f"Scan {scan.status}",
+            "error": final_state.get("error"),
+        })
+
     return {
         "findings": len(final_state.get("findings", [])),
         "chains": len(final_state.get("attack_chains", [])),
