@@ -207,7 +207,7 @@ export function connectAgentScanWS(
 ): WebSocket {
   const wsBase = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1")
     .replace(/^http/, "ws");
-  const ws = new WebSocket(`${wsBase}/agent-scans/ws/${scanId}`);
+  const ws = new WebSocket(`${wsBase}/agent-scans/ws/${scanId}?token=${getToken() ?? ""}`);
   ws.onmessage = (e) => {
     try { onEvent(JSON.parse(e.data)); } catch { /* ignore malformed */ }
   };
