@@ -48,7 +48,7 @@ async def _run(scan_id: str, target_url: str, target_type: str, config: dict) ->
     from sqlalchemy import select
 
     from agents.runtime import run_agent_scan
-    from models.models import Finding, ScanJob, Target
+    from models.models import AttackChain, Finding, ScanJob, Target
     from scoring.srs import compute_srs
 
     async with _make_session() as db:
@@ -113,7 +113,30 @@ async def _run(scan_id: str, target_url: str, target_type: str, config: dict) ->
             db.add(finding)
         await db.commit()
 
+        for chain in final_state.get("attack_chains", []):
+            db.add(AttackChain(
+                id=uuid.uuid4(),
+                scan_id=uuid.UUID(scan_id),
+                title=chain.title,
+                description=chain.description,
+                impact=chain.impact,
+                likelihood=chain.likelihood,
+                mitre_ids=chain.mitre_ids,
+                finding_ids=chain.finding_ids,
+                steps=[
+                    {
+                        "step": s.step,
+                        "action": s.action,
+                        "mitre_id": s.mitre_id,
+                        "finding_id": s.finding_id,
+                    }
+                    for s in chain.steps
+                ],
+            ))
+        await db.commit()
+
     return {
         "findings": len(final_state.get("findings", [])),
+        "chains": len(final_state.get("attack_chains", [])),
         "status": scan.status,
     }

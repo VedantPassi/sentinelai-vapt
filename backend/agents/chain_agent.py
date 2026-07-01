@@ -79,7 +79,7 @@ async def run(state: AgentState) -> AgentState:
 
     findings_json = json.dumps([
         {
-            "id": f.raw.get("finding_db_id", "") or "",
+            "id": str(i),
             "title": f.title,
             "severity": f.severity,
             "category": f.category,

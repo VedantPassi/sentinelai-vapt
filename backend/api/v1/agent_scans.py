@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.deps import get_current_user
 from core.db import get_db
-from models.models import Finding, ScanJob, Target, User
+from models.models import AttackChain, Finding, ScanJob, Target, User
 from workers.agent_worker import run_agent_task
 
 router = APIRouter(prefix="/agent-scans", tags=["agent-scans"])
@@ -193,3 +193,38 @@ async def agent_scan_ws(
 
     except WebSocketDisconnect:
         pass
+
+
+@router.get("/{scan_id}/chains")
+async def get_agent_scan_chains(
+    scan_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    await _get_scan_or_404(uuid.UUID(scan_id), current_user.org_id, db)
+
+    result = await db.execute(
+        select(AttackChain)
+        .where(AttackChain.scan_id == uuid.UUID(scan_id))
+        .order_by(AttackChain.created_at)
+    )
+    chains = result.scalars().all()
+
+    return {
+        "scan_id": scan_id,
+        "total": len(chains),
+        "chains": [
+            {
+                "id": str(c.id),
+                "title": c.title,
+                "description": c.description,
+                "impact": c.impact,
+                "likelihood": c.likelihood,
+                "mitre_ids": c.mitre_ids,
+                "finding_ids": c.finding_ids,
+                "steps": c.steps,
+                "created_at": c.created_at.isoformat(),
+            }
+            for c in chains
+        ],
+    }
