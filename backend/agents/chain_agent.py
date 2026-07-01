@@ -86,7 +86,7 @@ async def run(state: AgentState) -> AgentState:
             "description": f.description,
             "risk_score": f.risk_score,
         }
-        for f in top
+        for i, f in enumerate(top)
     ], indent=2)
 
     prompt = _PROMPT.format(
