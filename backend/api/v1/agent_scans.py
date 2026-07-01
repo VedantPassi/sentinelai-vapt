@@ -12,6 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.deps import get_current_user
 from core.db import get_db
+from core.redis_client import get_redis
+from core.security import decode_access_token
 from models.models import AttackChain, Finding, ScanJob, Target, User
 from workers.agent_worker import run_agent_task
 
@@ -155,44 +157,56 @@ async def get_agent_scan_findings(
 async def agent_scan_ws(
     websocket: WebSocket,
     scan_id: str,
+    token: str | None = None,
     db: AsyncSession = Depends(get_db),
 ) -> None:
+    if not token or not decode_access_token(token).get("sub"):
+        await websocket.close(code=1008)
+        return
+
     await websocket.accept()
-    last_event_count = 0
+
+    pubsub = get_redis().pubsub()
+    await pubsub.subscribe(f"scan:{scan_id}")
 
     try:
         while True:
-            result = await db.execute(
-                select(ScanJob).where(ScanJob.id == uuid.UUID(scan_id))
-            )
-            scan = result.scalar_one_or_none()
+            try:
+                msg = await asyncio.wait_for(
+                    pubsub.get_message(ignore_subscribe_messages=True),
+                    timeout=30.0,
+                )
+            except asyncio.TimeoutError:
+                # No Redis event in 30s — poll DB as fallback
+                await db.expire_all()
+                result = await db.execute(
+                    select(ScanJob).where(ScanJob.id == uuid.UUID(scan_id))
+                )
+                scan = result.scalar_one_or_none()
+                if scan and scan.status in ("completed", "failed"):
+                    cfg = scan.config or {}
+                    await websocket.send_text(json.dumps({
+                        "node": "system",
+                        "status": scan.status,
+                        "message": f"Scan {scan.status}",
+                        "error": cfg.get("error"),
+                    }))
+                    break
+                continue
 
-            if not scan:
-                await websocket.send_text(json.dumps({"error": "scan not found"}))
+            if msg is None:
+                continue
+
+            await websocket.send_text(msg["data"])
+            data = json.loads(msg["data"])
+            if data.get("status") in ("completed", "failed"):
                 break
-
-            cfg = scan.config or {}
-            events = cfg.get("progress_events", [])
-
-            if len(events) > last_event_count:
-                for event in events[last_event_count:]:
-                    await websocket.send_text(json.dumps(event))
-                last_event_count = len(events)
-
-            if scan.status in ("completed", "failed"):
-                await websocket.send_text(json.dumps({
-                    "node": "system",
-                    "status": scan.status,
-                    "message": f"Scan {scan.status}",
-                    "error": cfg.get("error"),
-                }))
-                break
-
-            await asyncio.sleep(2)
-            await db.expire_all()
 
     except WebSocketDisconnect:
         pass
+    finally:
+        await pubsub.unsubscribe(f"scan:{scan_id}")
+        await pubsub.aclose()
 
 
 @router.get("/{scan_id}/chains")
