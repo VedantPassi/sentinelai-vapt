@@ -61,6 +61,8 @@ def get_graph():
 
 
 async def run_agent_scan(scan_id: str, target_url: str, target_type: str, config: dict) -> AgentState:
+    from core.events import publish_scan_event
+
     initial: AgentState = {
         "scan_id": scan_id,
         "target_url": target_url,
@@ -74,4 +76,21 @@ async def run_agent_scan(scan_id: str, target_url: str, target_type: str, config
         "progress_events": [],
         "error": None,
     }
-    return await get_graph().ainvoke(initial)
+
+    last_event_count = 0
+    final_state: AgentState = initial
+
+    async for chunk in get_graph().astream(initial):
+        for node_state in chunk.values():
+            final_state = node_state
+            events = final_state.get("progress_events", [])
+            for event in events[last_event_count:]:
+                await publish_scan_event(scan_id, {
+                    "node": event.node,
+                    "status": event.status,
+                    "message": event.message,
+                    "timestamp": event.timestamp,
+                })
+            last_event_count = len(events)
+
+    return final_state
