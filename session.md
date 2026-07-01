@@ -98,34 +98,38 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 
 ## Current Session Log
 
-**Session #:** 8
+**Session #:** 9
 **Date:** 2026-07-01
 **Phase:** 5 — Reporting & Integrations
 
 **What was done:**
-- Fixed WS PENDING bug: `db.expire_all()` in WS polling loop (`api/v1/agent_scans.py`) — stale SQLAlchemy session cache was root cause ✅
-- Frontend polling fallback added (`pollUntilDone`) as secondary safety net ✅
-- E2e verified: scan completes, UI auto-updates to COMPLETED, findings + badges render ✅
-- Phase 5 P5-1 (chain_agent) started:
-  - `backend/agents/state.py` — `ChainStep`, `AttackChain` dataclasses + `attack_chains` in `AgentState`
-  - `backend/agents/chain_agent.py` — LLM chain discovery, top-20 confirmed findings, 1–5 chains output
-  - `backend/agents/runtime.py` — `chain` node wired: validator → chain → END
-  - `backend/models/models.py` — `AttackChain` DB model + ScanJob back-ref
-  - Alembic migration `cd775e0f3651` — `attack_chains` table live ✅
+- P5-1 chain_agent — fully wired + e2e verified ✅
+  - `chain_agent.py` enumerate bug fixed (`for i, f in enumerate(top)`)
+  - `agent_worker.py` writes AttackChain rows to DB post-scan
+  - `GET /agent-scans/{scan_id}/chains` endpoint live
+  - Chain API tested: 3 chains returned from Ollama on synthetic confirmed findings
+- P5-2 Redis pub/sub WS + JWT auth — complete ✅
+  - `core/redis_client.py` — async Redis singleton (db=3)
+  - `core/events.py` — `publish_scan_event()` with error swallow
+  - `agents/runtime.py` — switched to `astream`, publishes events per node
+  - `api/v1/agent_scans.py` — JWT auth via `?token=` query param, Redis subscribe, 30s fallback to DB poll
+  - `workers/agent_worker.py` — terminal system event published after all DB commits
+  - `frontend/lib/api.ts` — `?token=` appended to WS URL
+  - E2e verified: scan completed, 13 progress events, 0 chains (correct — no scanner tools = no findings)
 
 **Decisions made:**
-- Chain agent: reasoning tier LLM, cap 20 findings, 1–5 chains max
-- Tenant isolation: ScanJob join (no org_id on attack_chains) — consistent with Finding pattern
-- No Cytoscape.js frontend yet — API first, graph after e2e verified
+- Redis pub/sub (not streams) — simpler, WS is sole consumer
+- `?token=` query param for WS auth — only way from browser JS
+- CLI truncation bug confirmed: CTO writes scripts >20 lines to /tmp/*.py directly
+- Celery restart pattern: `pkill -f "celery.*agent_worker"` + `PYTHONPATH=$(pwd)` required
 
 **Blockers:** None
 
 **Next session should (resume here):**
-1. CLI proposes `agent_worker.py` diff — write AttackChain rows to DB post-chain node
-2. CLI proposes `GET /agent-scans/{scan_id}/chains` endpoint diff — CTO approves + wires
-3. E2e test: launch scan, verify chains in DB + API
-4. Cytoscape.js frontend chain graph
-5. Then P5-2 (Redis streams WS), P5-3 (SARIF), P5-4 (PDF), P5-5 (Jira/Slack)
+1. P5-3: SARIF export endpoint — `GET /agent-scans/{scan_id}/sarif` → returns SARIF 2.1.0 JSON
+2. P5-4: PDF improvements (executive summary, SRS per finding)
+3. P5-5: Jira + Slack integrations
+4. Frontend: Cytoscape.js chain graph visualization
 
 ---
 
