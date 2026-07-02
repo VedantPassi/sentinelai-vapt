@@ -125,11 +125,20 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 
 **Blockers:** None
 
+**What was done (continued):**
+- P5-3: SARIF 2.1.0 export — `GET /agent-scans/{scan_id}/sarif` ✅
+- P5-4: PDF improvements — exec summary, SRS per finding, attack chains section, fpdf2 multi_cell cursor fix ✅
+- P5-5: Jira + Slack integrations ✅
+  - `backend/api/v1/integrations.py` — `POST /{scan_id}/integrations/slack` + `POST /{scan_id}/integrations/jira`
+  - `core/config.py` — 5 new integration settings fields
+  - Wired into `main.py`
+
+**Phase 5 — COMPLETE ✅**
+
 **Next session should (resume here):**
-1. P5-3: SARIF export endpoint — `GET /agent-scans/{scan_id}/sarif` → returns SARIF 2.1.0 JSON
-2. P5-4: PDF improvements (executive summary, SRS per finding)
-3. P5-5: Jira + Slack integrations
-4. Frontend: Cytoscape.js chain graph visualization
+- Phase 6: Advanced Modules (Cloud/K8s scanning)
+- OR: Frontend Cytoscape.js chain graph visualization (deferred from P5-1)
+- Ask CTO which to prioritize
 
 ---
 
