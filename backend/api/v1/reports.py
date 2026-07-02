@@ -198,17 +198,17 @@ def _build_pdf(
 
             pdf.set_font("Helvetica", "", 9)
             pdf.set_text_color(60, 60, 60)
-            pdf.multi_cell(0, 5, _s(f.description or ""))
+            pdf.multi_cell(0, 5, _s(f.description or ""), new_x="LMARGIN", new_y="NEXT")
 
             if f.remediation:
                 pdf.set_font("Helvetica", "I", 9)
                 pdf.set_text_color(80, 100, 80)
-                pdf.multi_cell(0, 5, _s(f"Remediation: {f.remediation}"))
+                pdf.multi_cell(0, 5, _s(f"Remediation: {f.remediation}"), new_x="LMARGIN", new_y="NEXT")
 
             if f.validation_reasoning:
                 pdf.set_font("Helvetica", "I", 9)
                 pdf.set_text_color(100, 100, 130)
-                pdf.multi_cell(0, 5, _s(f"AI Reasoning: {f.validation_reasoning}"))
+                pdf.multi_cell(0, 5, _s(f"AI Reasoning: {f.validation_reasoning}"), new_x="LMARGIN", new_y="NEXT")
 
             pdf.set_text_color(20, 20, 20)
             pdf.ln(3)
@@ -234,7 +234,7 @@ def _build_pdf(
                      new_x="LMARGIN", new_y="NEXT")
 
             pdf.set_text_color(60, 60, 60)
-            pdf.multi_cell(0, 5, _s(chain.description or ""))
+            pdf.multi_cell(0, 5, _s(chain.description or ""), new_x="LMARGIN", new_y="NEXT")
 
             if chain.steps:
                 pdf.set_font("Helvetica", "B", 9)
@@ -246,7 +246,7 @@ def _build_pdf(
                     action = _s(step.get("action", ""))
                     mitre = step.get("mitre_id") or ""
                     suffix = f" [{mitre}]" if mitre else ""
-                    pdf.multi_cell(0, 5, f"  {step_num}. {action}{suffix}")
+                    pdf.multi_cell(0, 5, f"  {step_num}. {action}{suffix}", new_x="LMARGIN", new_y="NEXT")
 
             pdf.set_text_color(20, 20, 20)
             pdf.ln(3)
