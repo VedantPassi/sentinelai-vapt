@@ -8,6 +8,7 @@ from api.v1.findings import router as findings_router
 from api.v1.health import router as health_router
 from api.v1.reports import router as reports_router
 from api.v1.scans import router as scans_router
+from api.v1.sarif import router as sarif_router
 from api.v1.targets import router as targets_router
 
 app = FastAPI(title="SentinelAI", version="0.1.0")
@@ -27,3 +28,4 @@ app.include_router(scans_router, prefix="/api/v1")
 app.include_router(reports_router, prefix="/api/v1")
 app.include_router(agent_scans_router, prefix="/api/v1")
 app.include_router(findings_router, prefix="/api/v1")
+app.include_router(sarif_router, prefix="/api/v1")
