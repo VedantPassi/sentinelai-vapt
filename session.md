@@ -148,11 +148,27 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 - Redis pub/sub events don't stream live (event loop closed in Celery prefork) — DB poll fallback works
 - "Waiting for events..." shown on historical scans (expected — pub/sub doesn't persist)
 
+**What was done (session 11 - Nuclei debug):**
+- Root cause found: `nuclei_scanner.py` never checked `proc.returncode` — nuclei exits nonzero silently, returns `ScannerResult(findings=[], error=None)`, logs nothing
+- Fix applied: added `if proc.returncode != 0: return ScannerResult(error=f"nuclei exited {proc.returncode}: {stderr.decode()[:2000]}")` after `proc.communicate()`
+- Celery restarted with `PATH="/opt/homebrew/bin:$PATH" PYTHONPATH=$(pwd)` 
+- Test task queued (scan_id `219e6517-b897-47be-a127-831b65ca2a7b`, target `http://testphp.vulnweb.com`) — still running when session ended
+- UI issue found: page resets on refresh (no scan history persistence) — deferred
+
 **Next session should (resume here):**
-1. Verify web scan with Nuclei finds real findings on testphp.vulnweb.com (scan was running when session ended)
-2. Fix Redis pub/sub in Celery prefork — use sync redis publish instead of async
-3. Phase 6: Advanced Modules (Cloud/K8s) OR Cytoscape.js chain graph
-- Ask CTO which to prioritize
+1. Check `/tmp/celery_fresh.log` for `nuclei exited <N>: <stderr>` — that reveals real error
+2. Fix whatever nuclei error surfaces (likely: templates not found, flag issue, or PATH in forked process)
+3. Verify scan produces real findings in UI
+4. Fix UI: load most recent scan on page mount (so refresh doesn't lose state)
+5. Fix Redis pub/sub event loop closed in Celery prefork
+6. After findings confirmed → Phase 6 or chain graph — ask CTO which
+
+**Restart Celery command:**
+```bash
+cd "/Users/vedantpassi/Desktop/Projects/AI VAPT/backend"
+pkill -f "celery.*agent_worker" 2>/dev/null; sleep 1
+PATH="/opt/homebrew/bin:$PATH" PYTHONPATH=$(pwd) .venv/bin/celery -A workers.agent_worker.celery_app worker --loglevel=info --concurrency=1 > /tmp/celery_fresh.log 2>&1 &
+```
 
 ---
 
