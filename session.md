@@ -135,9 +135,23 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 
 **Phase 5 — COMPLETE ✅**
 
+**What was done (session 10 - verification):**
+- Fixed `app/page.tsx` — was default Next.js template, now redirects to `/login` ✅
+- Fixed Nuclei scanner: `-json` flag removed in v3, changed to `-jsonl` in `scanners/nuclei_scanner.py` ✅
+- Nuclei installed via brew (v3.10.0, templates installed) ✅
+- Celery restart pattern confirmed: `pkill -f "celery.*agent_worker"` + `PATH="/opt/homebrew/bin:$PATH" PYTHONPATH=$(pwd)`
+- Added `useEffect` to auto-load findings when `activeScan.status === "completed"` in agent-scans page ✅
+- Redis pub/sub `publish_scan_event` fails silently in Celery prefork (event loop closed) — fallback to DB poll works, not blocking
+
+**Known issues remaining:**
+- ZAP not installed — web scans only use Nuclei (sufficient for now)
+- Redis pub/sub events don't stream live (event loop closed in Celery prefork) — DB poll fallback works
+- "Waiting for events..." shown on historical scans (expected — pub/sub doesn't persist)
+
 **Next session should (resume here):**
-- Phase 6: Advanced Modules (Cloud/K8s scanning)
-- OR: Frontend Cytoscape.js chain graph visualization (deferred from P5-1)
+1. Verify web scan with Nuclei finds real findings on testphp.vulnweb.com (scan was running when session ended)
+2. Fix Redis pub/sub in Celery prefork — use sync redis publish instead of async
+3. Phase 6: Advanced Modules (Cloud/K8s) OR Cytoscape.js chain graph
 - Ask CTO which to prioritize
 
 ---
