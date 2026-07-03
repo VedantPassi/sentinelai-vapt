@@ -11,7 +11,7 @@ _SEVERITY_MAP = {"critical": "critical", "high": "high", "medium": "medium",
 async def run(target_url: str, config: dict | None = None) -> ScannerResult:
     start = time.monotonic()
     tags = (config or {}).get("tags", "")
-    cmd = ["nuclei", "-u", target_url, "-json", "-silent"]
+    cmd = ["nuclei", "-u", target_url, "-jsonl", "-silent"]
     if tags:
         cmd += ["-tags", tags]
 
