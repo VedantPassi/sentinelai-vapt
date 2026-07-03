@@ -27,6 +27,9 @@ async def run(target_url: str, config: dict | None = None) -> ScannerResult:
     except asyncio.TimeoutError:
         return ScannerResult(error="nuclei timed out after 600s")
 
+    if proc.returncode != 0:
+        return ScannerResult(error=f"nuclei exited {proc.returncode}: {stderr.decode()[:2000]}")
+
     duration = time.monotonic() - start
     raw = stdout.decode()
     findings = _parse_jsonl(raw)
