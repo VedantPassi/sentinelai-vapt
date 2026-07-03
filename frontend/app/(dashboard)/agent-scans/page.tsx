@@ -174,6 +174,12 @@ export default function AgentScansPage() {
     eventsEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [events]);
 
+  useEffect(() => {
+    if (activeScan?.status === "completed" && findings.length === 0) {
+      loadFindings(activeScan.id);
+    }
+  }, [activeScan?.status]);
+
   async function startScan() {
     if (!selectedTarget) { setError("Select a target first"); return; }
     const target = targets.find((t) => t.id === selectedTarget);
