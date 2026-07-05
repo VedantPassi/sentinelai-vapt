@@ -172,6 +172,18 @@ export default function AgentScansPage() {
   }, []);
 
   useEffect(() => {
+    listAgentScans()
+      .then((scans) => {
+        if (scans.length > 0 && !activeScan) {
+          const latest = scans[0];
+          setActiveScan(latest);
+          if (latest.status === "completed") loadFindings(latest.id);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
     eventsEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [events]);
 
