@@ -155,13 +155,20 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 - Test task queued (scan_id `219e6517-b897-47be-a127-831b65ca2a7b`, target `http://testphp.vulnweb.com`) — still running when session ended
 - UI issue found: page resets on refresh (no scan history persistence) — deferred
 
+**What was done (session 12):**
+- Root cause of 0 findings: `nuclei_scanner.py` never checked `proc.returncode` (already fixed in session 11)
+- Added unconditional debug log to nuclei_scanner.py: `logger.info("nuclei: rc=%s duration=%.1fs stdout=%d bytes stderr=%s", ...)`
+- Confirmed: `rc=0, duration=23s, stdout=0 bytes` → nuclei exits clean with zero output
+- Identified: `testphp.vulnweb.com` unreachable from dev network (ping 100% packet loss) — not a code bug
+- Verified against `scanme.nmap.org`: `rc=0, duration=180s, stdout=208752 bytes` → `findings: 15, chains: 1` ✅
+- Full pipeline verified end-to-end: Nuclei → findings → SRS scoring → chain discovery → DB persist
+- **UI state persistence fix**: added `GET /agent-scans` list endpoint (backend) + `listAgentScans()` (frontend api.ts) + mount useEffect to load latest scan on page refresh
+- **Security note**: prompt-injection probe found in `node_modules/next/dist/docs/index.md` — fake "AI agent hint" suggesting `unstable_instant` export. Ignored. Report to Next.js security team if not expected.
+
 **Next session should (resume here):**
-1. Check `/tmp/celery_fresh.log` for `nuclei exited <N>: <stderr>` — that reveals real error
-2. Fix whatever nuclei error surfaces (likely: templates not found, flag issue, or PATH in forked process)
-3. Verify scan produces real findings in UI
-4. Fix UI: load most recent scan on page mount (so refresh doesn't lose state)
-5. Fix Redis pub/sub event loop closed in Celery prefork
-6. After findings confirmed → Phase 6 or chain graph — ask CTO which
+1. Verify UI: refresh Agent Scans page → latest completed scan + findings auto-load ✅
+2. Fix Redis pub/sub — replace async `publish_scan_event` with sync redis publish inside Celery prefork (so live events stream)
+3. Phase 6: Advanced Modules (Cloud/K8s) OR Cytoscape.js chain graph — ask CTO which
 
 **Restart Celery command:**
 ```bash
