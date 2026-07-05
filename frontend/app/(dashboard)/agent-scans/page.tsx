@@ -9,6 +9,7 @@ import {
   createAgentScan,
   getAgentScan,
   getAgentScanFindings,
+  listAgentScans,
   listTargets,
   patchFinding,
   revalidateFinding,
