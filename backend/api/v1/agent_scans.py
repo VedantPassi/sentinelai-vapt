@@ -96,6 +96,33 @@ async def create_agent_scan(
     )
 
 
+@router.get("", response_model=list[AgentScanResponse])
+async def list_agent_scans(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> list[AgentScanResponse]:
+    result = await db.execute(
+        select(ScanJob, Target)
+        .join(Target, ScanJob.target_id == Target.id)
+        .where(Target.org_id == current_user.org_id)
+        .order_by(ScanJob.created_at.desc())
+        .limit(20)
+    )
+    rows = result.all()
+    out = []
+    for scan, target in rows:
+        cfg = scan.config or {}
+        created_at = (scan.started_at or scan.completed_at or scan.created_at).isoformat()
+        out.append(AgentScanResponse(
+            id=str(scan.id),
+            status=scan.status,
+            target_url=cfg.get("target_url", target.url),
+            target_type=cfg.get("target_type", "web"),
+            created_at=created_at,
+        ))
+    return out
+
+
 @router.get("/{scan_id}", response_model=AgentScanResponse)
 async def get_agent_scan(
     scan_id: str,

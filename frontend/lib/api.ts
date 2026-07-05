@@ -193,6 +193,10 @@ export async function getAgentScan(id: string): Promise<AgentScan> {
   return request<AgentScan>(`/agent-scans/${id}`);
 }
 
+export async function listAgentScans(): Promise<AgentScan[]> {
+  return request<AgentScan[]>("/agent-scans");
+}
+
 export async function getAgentScanFindings(
   id: string,
   severity?: string
