@@ -1,8 +1,11 @@
 import asyncio
 import json
+import logging
 import time
 
 from scanners.base import FindingData, ScannerResult
+
+logger = logging.getLogger(__name__)
 
 _SEVERITY_MAP = {"critical": "critical", "high": "high", "medium": "medium",
                  "low": "low", "info": "info", "unknown": "info"}
@@ -26,6 +29,11 @@ async def run(target_url: str, config: dict | None = None) -> ScannerResult:
         return ScannerResult(error="nuclei not installed")
     except asyncio.TimeoutError:
         return ScannerResult(error="nuclei timed out after 600s")
+
+    logger.info(
+        "nuclei: rc=%s duration=%.1fs stdout=%d bytes stderr=%s",
+        proc.returncode, time.monotonic() - start, len(stdout), stderr.decode()[:500],
+    )
 
     if proc.returncode != 0:
         return ScannerResult(error=f"nuclei exited {proc.returncode}: {stderr.decode()[:2000]}")
