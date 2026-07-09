@@ -61,7 +61,7 @@ def get_graph():
 
 
 async def run_agent_scan(scan_id: str, target_url: str, target_type: str, config: dict) -> AgentState:
-    from core.events import publish_scan_event
+    from core.events import publish_scan_event_sync
 
     initial: AgentState = {
         "scan_id": scan_id,
