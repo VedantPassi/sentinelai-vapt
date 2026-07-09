@@ -63,7 +63,7 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 | 6 | Advanced Modules (Cloud/K8s) | ⬜ Not Started |
 | 7 | Enterprise Features | ⬜ Not Started |
 
-**Current Phase: 6**
+**Current Phase: 6 — NOT STARTED**
 
 ---
 

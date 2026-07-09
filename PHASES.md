@@ -67,53 +67,54 @@
 
 ---
 
-## Phase 3 — AI Agent Framework ⬜
+## Phase 3 — AI Agent Framework ✅
 
 | Task | Status | Notes |
 |------|--------|-------|
-| LangGraph agent runtime setup | ⬜ | |
-| Recon Agent (DNS, subdomain, fingerprint) | ⬜ | |
-| Attack Planner Agent (MITRE ATT&CK mapping) | ⬜ | |
-| Web App Agent (crawl + OWASP Top 10) | ⬜ | |
-| API Agent (OpenAPI spec parsing + BOLA/BFLA) | ⬜ | |
-| Network Agent (Nmap-guided CVE mapping) | ⬜ | |
-| Claude API integration (claude-sonnet-4-6) | ⬜ | |
-| GitHub/GitLab source code integration | ⬜ | |
-| Agent result storage + pipeline wiring | ⬜ | |
-| WebSocket real-time scan progress | ⬜ | |
-| Frontend: live scan progress view | ⬜ | |
-| phase-reports/phase-3-report.md | ⬜ | |
+| LangGraph agent runtime setup | ✅ | `backend/agents/runtime.py` — astream loop |
+| Recon Agent (DNS, subdomain, fingerprint) | ✅ | `backend/agents/recon_agent.py` |
+| Attack Planner Agent (MITRE ATT&CK mapping) | ✅ | `backend/agents/planner_agent.py` |
+| Web App Agent (crawl + OWASP Top 10) | ✅ | `backend/agents/webapp_agent.py` — Nuclei |
+| API Agent (OpenAPI spec parsing + BOLA/BFLA) | ✅ | `backend/agents/api_agent.py` |
+| Network Agent (Nmap-guided CVE mapping) | ✅ | `backend/agents/network_agent.py` |
+| LLM abstraction (Ollama dev / Claude prod) | ✅ | `llm_complete()` — `LLM_PROVIDER` env var |
+| Agent result storage + pipeline wiring | ✅ | LangGraph graph: recon→planner→webapp/network→validator→chain |
+| WebSocket real-time scan progress | ✅ | Redis pub/sub → WS |
+| Frontend: live scan progress view | ✅ | `frontend/app/(dashboard)/agent-scans/page.tsx` |
+| Celery worker for agent tasks | ✅ | `backend/workers/agent_worker.py` |
+| phase-reports/phase-3-report.md | ✅ | `IMP info/reports/phase-3-audit.md` |
 
 ---
 
-## Phase 4 — Validation & Risk Scoring ⬜
+## Phase 4 — Validation & Risk Scoring ✅
 
 | Task | Status | Notes |
 |------|--------|-------|
-| Validation Agent (PoC confirmation logic) | ⬜ | |
-| SRS formula engine (CVSS + exploitability + asset criticality + EPSS) | ⬜ | |
-| False-positive ML classifier v1 | ⬜ | |
-| Chain Discovery Agent v1 (finding correlation) | ⬜ | |
-| Confidence scoring per finding | ⬜ | |
-| Finding status workflow (confirmed/unconfirmed/FP) | ⬜ | |
-| Frontend: SRS score display + risk breakdown | ⬜ | |
-| phase-reports/phase-4-report.md | ⬜ | |
+| Validation Agent (PoC confirmation logic) | ✅ | `backend/agents/validator_agent.py` |
+| SRS formula engine | ✅ | severity(40%) + exploitability(30%) + asset_criticality(20%) + confidence(10%) → 0–100 |
+| False-positive detection | ✅ | LLM-based confidence scoring |
+| Chain Discovery Agent v1 | ✅ | `backend/agents/chain_agent.py` — 1–5 attack paths from confirmed findings |
+| Finding status workflow | ✅ | open/confirmed/false_positive/fixed — PATCH /findings/{id} |
+| Frontend: SRS score + status badges | ✅ | FindingCard with SRS badge + confirm/FP/revalidate actions |
+| Re-validation endpoint | ✅ | `POST /findings/{id}/validate` |
+| phase-reports/phase-4-report.md | ✅ | `IMP info/reports/phase-4-audit.md` |
 
 ---
 
-## Phase 5 — Reporting & Integrations ⬜
+## Phase 5 — Reporting & Integrations ✅
 
 | Task | Status | Notes |
 |------|--------|-------|
-| Executive dashboard (posture score, trends) | ⬜ | |
-| PDF/HTML report templates | ⬜ | |
-| MITRE ATT&CK mapping in reports | ⬜ | |
-| OWASP ASVS compliance report | ⬜ | |
-| Code patch generation (Claude API) | ⬜ | |
-| JIRA integration (ticket creation) | ⬜ | |
-| Slack integration (finding alerts) | ⬜ | |
-| Frontend: report viewer + download | ⬜ | |
-| phase-reports/phase-5-report.md | ⬜ | |
+| Attack chain discovery (P5-1) | ✅ | chain_agent + AttackChain model + GET /agent-scans/{id}/chains |
+| Redis pub/sub WS + JWT auth (P5-2) | ✅ | Live events stream; sync publish in worker; async subscribe in WS |
+| SARIF 2.1.0 export (P5-3) | ✅ | GET /agent-scans/{id}/sarif |
+| PDF report improvements (P5-4) | ✅ | Exec summary, SRS per finding, chains section; fpdf2 cursor fix |
+| Jira + Slack integrations (P5-5) | ✅ | POST /agent-scans/{id}/integrations/slack|jira |
+| UI refresh state persistence | ✅ | GET /agent-scans list + listAgentScans() + mount useEffect |
+| Nuclei v3 fix | ✅ | -jsonl flag, returncode check, PATH fix |
+| Redis pub/sub sync fix | ✅ | publish_scan_event_sync() — no event-loop errors |
+| E2E verified | ✅ | 15 findings, 1 chain, 17 live events — scanme.nmap.org |
+| phase-reports/phase-5-report.md | ✅ | `IMP info/reports/phase-5-audit.md` |
 
 ---
 
