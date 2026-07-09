@@ -165,10 +165,17 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 - **UI state persistence fix**: added `GET /agent-scans` list endpoint (backend) + `listAgentScans()` (frontend api.ts) + mount useEffect to load latest scan on page refresh
 - **Security note**: prompt-injection probe found in `node_modules/next/dist/docs/index.md` — fake "AI agent hint" suggesting `unstable_instant` export. Ignored. Report to Next.js security team if not expected.
 
+**What was done (session 13):**
+- Redis pub/sub fix — all 3 changes shipped and verified:
+  - `core/redis_client.py` — added `get_redis_sync()` (plain `redis.Redis`, no event loop binding)
+  - `core/events.py` — added `publish_scan_event_sync()` for worker path
+  - `agents/runtime.py` + `workers/agent_worker.py` — switched to sync publisher
+- Verified: 17 progress events streamed live via Redis pub/sub, zero "event loop is closed" errors
+- Committed + pushed (`2cfd7c3`)
+
 **Next session should (resume here):**
-1. Verify UI: refresh Agent Scans page → latest completed scan + findings auto-load ✅
-2. Fix Redis pub/sub — replace async `publish_scan_event` with sync redis publish inside Celery prefork (so live events stream)
-3. Phase 6: Advanced Modules (Cloud/K8s) OR Cytoscape.js chain graph — ask CTO which
+1. Verify UI: refresh Agent Scans page → latest completed scan + findings auto-load (quick manual check)
+2. Phase 6: Advanced Modules (Cloud/K8s) OR Cytoscape.js chain graph — ask CTO which to start
 
 **Restart Celery command:**
 ```bash
