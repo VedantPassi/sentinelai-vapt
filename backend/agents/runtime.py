@@ -85,7 +85,7 @@ async def run_agent_scan(scan_id: str, target_url: str, target_type: str, config
             final_state = node_state
             events = final_state.get("progress_events", [])
             for event in events[last_event_count:]:
-                await publish_scan_event(scan_id, {
+                publish_scan_event_sync(scan_id, {
                     "node": event.node,
                     "status": event.status,
                     "message": event.message,
