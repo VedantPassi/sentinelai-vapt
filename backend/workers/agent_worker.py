@@ -98,7 +98,7 @@ async def _run(scan_id: str, target_url: str, target_type: str, config: dict) ->
         for fd in final_state.get("findings", []):
             fd_status = fd.status if fd.status in ("confirmed", "false_positive") else "open"
             finding = Finding(
-                id=uuid.uuid4(),
+                id=uuid.UUID(fd.id),
                 scan_id=uuid.UUID(scan_id),
                 category=fd.category,
                 severity=fd.severity,
