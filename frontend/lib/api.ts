@@ -205,6 +205,13 @@ export async function getAgentScanFindings(
   return request<AgentFindingsResponse>(`/agent-scans/${id}/findings${qs}`);
 }
 
+export async function listAgentScanChains(id: string): Promise<AgentChain[]> {
+  const res = await request<{ scan_id: string; total: number; chains: AgentChain[] }>(
+    `/agent-scans/${id}/chains`
+  );
+  return res.chains;
+}
+
 export function connectAgentScanWS(
   scanId: string,
   onEvent: (event: ProgressEvent | { node: string; status: string; message: string; error?: string }) => void
