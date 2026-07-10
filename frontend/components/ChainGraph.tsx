@@ -2,26 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import cytoscape, { Core, ElementDefinition } from "cytoscape";
-import { AgentFinding } from "@/lib/api";
-
-export interface ChainStep {
-  step: number;
-  action: string;
-  mitre_id: string | null;
-  finding_id: string | null;
-}
-
-export interface AgentChain {
-  id: string;
-  title: string;
-  description: string;
-  impact: "critical" | "high" | "medium" | "low";
-  likelihood: "high" | "medium" | "low";
-  mitre_ids: string[];
-  finding_ids: string[];
-  steps: ChainStep[];
-  created_at: string;
-}
+import { AgentChain, AgentFinding, ChainStep } from "@/lib/api";
 
 interface ChainGraphProps {
   chains: AgentChain[];
