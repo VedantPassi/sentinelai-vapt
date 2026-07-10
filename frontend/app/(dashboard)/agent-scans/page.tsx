@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
+  AgentChain,
   AgentFinding,
   AgentScan,
   ProgressEvent,
@@ -9,12 +10,14 @@ import {
   createAgentScan,
   getAgentScan,
   getAgentScanFindings,
+  listAgentScanChains,
   listAgentScans,
   listTargets,
   patchFinding,
   revalidateFinding,
   Target,
 } from "@/lib/api";
+import ChainGraph from "@/components/ChainGraph";
 
 const SEVERITY_COLOR: Record<string, string> = {
   critical: "text-red-600 bg-red-50",
@@ -162,6 +165,7 @@ export default function AgentScansPage() {
   const [activeScan, setActiveScan] = useState<AgentScan | null>(null);
   const [events, setEvents] = useState<ProgressEvent[]>([]);
   const [findings, setFindings] = useState<AgentFinding[]>([]);
+  const [chains, setChains] = useState<AgentChain[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -177,7 +181,7 @@ export default function AgentScansPage() {
         if (scans.length > 0 && !activeScan) {
           const latest = scans[0];
           setActiveScan(latest);
-          if (latest.status === "completed") loadFindings(latest.id);
+          if (latest.status === "completed") { loadFindings(latest.id); loadChains(latest.id); }
         }
       })
       .catch(() => {});
@@ -190,6 +194,7 @@ export default function AgentScansPage() {
   useEffect(() => {
     if (activeScan?.status === "completed" && findings.length === 0) {
       loadFindings(activeScan.id);
+      loadChains(activeScan.id);
     }
   }, [activeScan?.status]);
 
@@ -202,6 +207,7 @@ export default function AgentScansPage() {
     setLoading(true);
     setEvents([]);
     setFindings([]);
+    setChains([]);
 
     try {
       const scan = await createAgentScan({
@@ -223,7 +229,7 @@ export default function AgentScansPage() {
     const ws = connectAgentScanWS(scanId, (event) => {
       if ("node" in event && event.node === "system") {
         setActiveScan((prev) => prev ? { ...prev, status: event.status } : prev);
-        if (event.status === "completed") loadFindings(scanId);
+        if (event.status === "completed") { loadFindings(scanId); loadChains(scanId); }
         ws.close();
         return;
       }
@@ -239,7 +245,7 @@ export default function AgentScansPage() {
       try {
         const scan = await getAgentScan(scanId);
         setActiveScan(scan);
-        if (scan.status === "completed") { loadFindings(scanId); return; }
+        if (scan.status === "completed") { loadFindings(scanId); loadChains(scanId); return; }
         if (scan.status === "failed") return;
       } catch { return; }
     }
@@ -249,6 +255,13 @@ export default function AgentScansPage() {
     try {
       const res = await getAgentScanFindings(scanId);
       setFindings(res.findings);
+    } catch { /* non-critical */ }
+  }
+
+  async function loadChains(scanId: string) {
+    try {
+      const c = await listAgentScanChains(scanId);
+      setChains(c);
     } catch { /* non-critical */ }
   }
 
@@ -348,6 +361,17 @@ export default function AgentScansPage() {
               <FindingCard key={f.id} finding={f} onUpdate={updateFinding} />
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Attack Chain Graph */}
+      {activeScan?.status === "completed" && (
+        <div className="bg-white border rounded-lg p-5">
+          <h2 className="font-semibold text-lg mb-3">
+            Attack Chains{" "}
+            <span className="text-gray-400 font-normal">({chains.length})</span>
+          </h2>
+          <ChainGraph chains={chains} findings={findings} />
         </div>
       )}
     </div>
