@@ -79,14 +79,14 @@ async def run(state: AgentState) -> AgentState:
 
     findings_json = json.dumps([
         {
-            "id": str(i),
+            "id": f.id,
             "title": f.title,
             "severity": f.severity,
             "category": f.category,
             "description": f.description,
             "risk_score": f.risk_score,
         }
-        for i, f in enumerate(top)
+        for f in top
     ], indent=2)
 
     prompt = _PROMPT.format(
