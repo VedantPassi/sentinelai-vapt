@@ -173,9 +173,25 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 - Verified: 17 progress events streamed live via Redis pub/sub, zero "event loop is closed" errors
 - Committed + pushed (`2cfd7c3`)
 
+**What was done (session 14 - Phase 6 start):**
+- chain_agent.py: fixed finding_ids — LLM now gets real `f.id` UUIDs instead of ordinal indices
+- scanners/base.py: `FindingData` gets stable `id: str` (uuid4) at creation
+- workers/agent_worker.py: `Finding` inserted with `uuid.UUID(fd.id)` so DB id matches chain references
+- Cytoscape installed: `npm install cytoscape @types/cytoscape`
+- `frontend/components/ChainGraph.tsx` — new component: chain selector sidebar + Cytoscape breadthfirst graph + node detail panel on tap
+- `frontend/lib/api.ts` — added `ChainStep`, `AgentChain` interfaces + `listAgentScanChains()`
+- `frontend/app/(dashboard)/agent-scans/page.tsx` — wired: `chains` state, `loadChains()`, graph renders after findings
+- Pushed to origin/main (`2d08512`)
+
+**Pending:**
+- TypeCheck frontend (CLI was about to run `npx tsc --noEmit` when session ended)
+- Manual UI verify: run scan against reachable target, confirm chain graph renders with nodes/edges
+
 **Next session should (resume here):**
-1. Verify UI: refresh Agent Scans page → latest completed scan + findings auto-load (quick manual check)
-2. Phase 6: Advanced Modules (Cloud/K8s) OR Cytoscape.js chain graph — ask CTO which to start
+1. CLI: `cd frontend && npx tsc --noEmit` — fix any type errors
+2. Start dev server, run scan against reachable target, verify chain graph renders
+3. Commit any typecheck fixes
+4. Then: Cloud/K8s scanning (Phase 6 track 2)
 
 **Restart Celery command:**
 ```bash
