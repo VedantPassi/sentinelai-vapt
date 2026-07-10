@@ -1,3 +1,4 @@
+import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -8,6 +9,7 @@ class FindingData:
     severity: str  # critical | high | medium | low | info
     title: str
     description: str
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
     srs_score: float | None = None
     poc_evidence: str | None = None
     remediation: str | None = None
