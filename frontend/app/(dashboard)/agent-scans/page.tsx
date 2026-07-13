@@ -179,7 +179,7 @@ export default function AgentScansPage() {
     listAgentScans()
       .then((scans) => {
         if (scans.length > 0 && !activeScan) {
-          const latest = scans[0];
+          const latest = scans.find((s) => s.status === "completed") ?? scans[0];
           setActiveScan(latest);
           if (latest.status === "completed") { loadFindings(latest.id); loadChains(latest.id); }
         }
