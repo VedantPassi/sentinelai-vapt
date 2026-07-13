@@ -94,8 +94,10 @@ export default function ChainGraph({ chains, findings }: ChainGraphProps) {
         name: "breadthfirst",
         directed: true,
         spacingFactor: 1.4,
-        padding: 30,
+        padding: 40,
       },
+      minZoom: 0.3,
+      maxZoom: 2,
       style: [
         {
           selector: "node",
@@ -112,8 +114,8 @@ export default function ChainGraph({ chains, findings }: ChainGraphProps) {
             "text-margin-y": 6,
             "text-wrap": "wrap",
             "text-max-width": "100px",
-            width: 36,
-            height: 36,
+            width: 44,
+            height: 44,
           },
         },
         {
@@ -156,6 +158,13 @@ export default function ChainGraph({ chains, findings }: ChainGraphProps) {
 
     cy.on("tap", (evt) => {
       if (evt.target === cy) setSelectedNode(null);
+    });
+
+    cy.ready(() => {
+      if (cy.nodes().length === 1) {
+        cy.zoom(1.2);
+        cy.center();
+      }
     });
 
     cyRef.current = cy;
