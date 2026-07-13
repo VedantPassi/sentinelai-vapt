@@ -183,15 +183,21 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 - `frontend/app/(dashboard)/agent-scans/page.tsx` — wired: `chains` state, `loadChains()`, graph renders after findings
 - Pushed to origin/main (`2d08512`)
 
-**Pending:**
-- TypeCheck frontend (CLI was about to run `npx tsc --noEmit` when session ended)
-- Manual UI verify: run scan against reachable target, confirm chain graph renders with nodes/edges
+**What was done (session 15 - P6-1 verified):**
+- TypeCheck: `npx tsc --noEmit` clean — zero errors
+- UI verified: network scan against scanme.nmap.org → 2 findings (CONFIRMED + FALSE POSITIVE) + 2 attack chains
+- Chain graph renders: node size fixed (single-node zoom capped), node tap shows detail panel with MITRE ID + action + "finding not linked" badge
+- "finding not linked" expected for pre-UUID-fix scans; new scans will show finding titles
+- mount useEffect updated: prefer latest completed scan over latest scan
+- Pushed to origin/main (`8ad1cad`)
+
+**P6-1 Cytoscape chain graph — COMPLETE ✅**
 
 **Next session should (resume here):**
-1. CLI: `cd frontend && npx tsc --noEmit` — fix any type errors
-2. Start dev server, run scan against reachable target, verify chain graph renders
-3. Commit any typecheck fixes
-4. Then: Cloud/K8s scanning (Phase 6 track 2)
+1. Phase 6 track 2: Container/K8s scanning — Trivy + kube-bench
+   - Need: Docker running locally + a test container image
+2. Phase 6 track 3: Cloud Security — Prowler (needs AWS creds)
+3. Phase 6 track 4: Neo4j attack path graph
 
 **Restart Celery command:**
 ```bash
