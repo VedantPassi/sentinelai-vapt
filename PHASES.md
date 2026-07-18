@@ -123,7 +123,7 @@
 | Task | Status | Notes |
 |------|--------|-------|
 | Cytoscape.js chain graph (P6-1) | ✅ | ChainGraph.tsx — chain selector + graph + node tap detail; verified with real scan |
-| Container/K8s: Trivy + kube-bench (P6-2) | ⬜ | Needs Docker locally |
+| Container/K8s: Trivy + kube-bench (P6-2) | ✅ | trivy_scanner.py + container_agent.py — 379 findings, 26 LLM-enriched |
 | Cloud Security: Prowler/ScoutSuite (P6-3) | ⬜ | Needs AWS creds |
 | Neo4j attack path graph (P6-4) | ⬜ | Phase 6 finale |
 | Chain Discovery Agent v2 (P6-5) | ⬜ | Cross-surface kill chains |

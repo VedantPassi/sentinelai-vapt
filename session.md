@@ -193,11 +193,22 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 
 **P6-1 Cytoscape chain graph — COMPLETE ✅**
 
+**What was done (session 16 - P6-2):**
+- Trivy 0.72.0 installed via brew
+- `backend/scanners/trivy_scanner.py` — Trivy wrapper: image + fs scan, parses CVEs/secrets/misconfigs, CVSS extraction
+- `backend/agents/container_agent.py` — container agent: runs trivy, LLM enriches top 20 critical/high CVEs
+- `backend/agents/recon_agent.py` — early return for container target_type (skip DNS/fingerprint)
+- `backend/agents/planner_agent.py` — early return for container target_type (skip LLM planning)
+- `backend/agents/runtime.py` — added container node + route in graph
+- `frontend/app/(dashboard)/agent-scans/page.tsx` — added "Container Image" scan type option
+- Verified: python:3.8-slim → 379 findings (76 critical/high), 26 LLM-enriched with exploitability + blast radius
+
+**P6-2 Container scanning — COMPLETE ✅**
+
 **Next session should (resume here):**
-1. Phase 6 track 2: Container/K8s scanning — Trivy + kube-bench
-   - Need: Docker running locally + a test container image
-2. Phase 6 track 3: Cloud Security — Prowler (needs AWS creds)
-3. Phase 6 track 4: Neo4j attack path graph
+1. Phase 6 track 3: Cloud Security — Prowler/ScoutSuite (needs AWS creds configured in .env)
+2. Phase 6 track 4: Neo4j attack path graph
+3. Phase 6 track 5: Chain Discovery Agent v2 (cross-surface kill chains)
 
 **Restart Celery command:**
 ```bash
