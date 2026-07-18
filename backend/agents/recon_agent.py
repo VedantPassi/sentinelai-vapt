@@ -37,6 +37,13 @@ async def run(state: AgentState) -> AgentState:
     state["current_node"] = "recon"
     state["progress_events"].append(_event("recon", "started", "Recon agent starting"))
 
+    if state.get("target_type") == "container":
+        state["recon_data"] = ReconData()
+        state["progress_events"].append(
+            _event("recon", "completed", "Recon skipped — container scan")
+        )
+        return state
+
     target_url = state["target_url"]
     parsed = urlparse(target_url)
     domain = parsed.hostname or target_url

@@ -7,6 +7,7 @@ from agents.state import AgentState
 
 def build_graph() -> StateGraph:
     from agents.chain_agent import run as chain_run
+    from agents.container_agent import run as container_run
     from agents.network_agent import run as network_run
     from agents.planner_agent import run as planner_run
     from agents.recon_agent import run as recon_run
@@ -19,6 +20,7 @@ def build_graph() -> StateGraph:
     graph.add_node("planner", planner_run)
     graph.add_node("webapp", webapp_run)
     graph.add_node("network", network_run)
+    graph.add_node("container", container_run)
     graph.add_node("validator", validator_run)
     graph.add_node("chain", chain_run)
 
@@ -30,11 +32,13 @@ def build_graph() -> StateGraph:
         {
             "webapp": "webapp",
             "network": "network",
+            "container": "container",
             "end": END,
         },
     )
     graph.add_edge("webapp", "validator")
     graph.add_edge("network", "validator")
+    graph.add_edge("container", "validator")
     graph.add_edge("validator", "chain")
     graph.add_edge("chain", END)
 
@@ -47,6 +51,8 @@ def _route_by_target_type(state: AgentState) -> str:
         return "webapp"
     if t == "network":
         return "network"
+    if t == "container":
+        return "container"
     return "end"
 
 

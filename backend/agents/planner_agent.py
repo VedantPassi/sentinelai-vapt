@@ -49,6 +49,13 @@ async def run(state: AgentState) -> AgentState:
     state["current_node"] = "planner"
     state["progress_events"].append(_event("started", "Attack planner starting"))
 
+    if state.get("target_type") == "container":
+        state["attack_plan"] = AttackPlan(summary="Container scan — planner skipped", vectors=[])
+        state["progress_events"].append(
+            _event("completed", "Planner skipped — container scan")
+        )
+        return state
+
     recon = state.get("recon_data")
     techs = ", ".join(recon.technologies) if recon and recon.technologies else "unknown"
     subs = ", ".join(recon.subdomains[:10]) if recon and recon.subdomains else "none"
