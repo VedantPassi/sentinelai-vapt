@@ -161,7 +161,7 @@ function FindingCard({
 export default function AgentScansPage() {
   const [targets, setTargets] = useState<Target[]>([]);
   const [selectedTarget, setSelectedTarget] = useState("");
-  const [scanType, setScanType] = useState<"web" | "api" | "network">("web");
+  const [scanType, setScanType] = useState<"web" | "api" | "network" | "container">("web");
   const [activeScan, setActiveScan] = useState<AgentScan | null>(null);
   const [events, setEvents] = useState<ProgressEvent[]>([]);
   const [findings, setFindings] = useState<AgentFinding[]>([]);
@@ -304,6 +304,7 @@ export default function AgentScansPage() {
               <option value="web">Web App</option>
               <option value="api">API</option>
               <option value="network">Network</option>
+              <option value="container">Container Image</option>
             </select>
           </div>
         </div>
