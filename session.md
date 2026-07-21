@@ -219,9 +219,32 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 
 **P6-5 Chain Discovery Agent v2 — COMPLETE ✅**
 
+**What was done (session 18 - P6-4):**
+- `infra/docker/docker-compose.yml` — Neo4j 5 community added (ports 7474/7687, APOC plugin)
+- `backend/core/neo4j_client.py` — async driver wrapper (bolt://localhost:7687)
+- `backend/core/config.py` — neo4j_uri/user/password settings added
+- `backend/agents/graph_agent.py` — ingests Scan/Target/Finding/Chain/Step nodes + edges into Neo4j
+- `backend/api/v1/attack_graph.py` — 3 endpoints: full graph, attack paths, blast radius
+- `backend/agents/runtime.py` — graph node after chain: chain→graph→END
+- `backend/requirements.txt` — neo4j>=6.2.0 added
+- `frontend/lib/api.ts` — GraphNode/GraphEdge/AttackGraph/BlastRadius interfaces + getAttackGraph/getBlastRadius
+- `frontend/components/AttackGraphView.tsx` — Cytoscape graph (finding=ellipse/red, chain=diamond/blue, step=rect/green) + blast radius tab
+- `frontend/app/(dashboard)/agent-scans/page.tsx` — AttackGraphView section added after chains
+- Verified: smoke test → 2 findings + 1 chain + 2 steps in Neo4j; API returns correct graph; tsc clean
+- Pushed to origin/main (a458a9a)
+
+**P6-4 Neo4j attack path graph — COMPLETE ✅**
+
+**Phase 6 status:**
+- P6-1 Cytoscape chain graph ✅
+- P6-2 Container scanning (Trivy) ✅
+- P6-3 Cloud Security (Prowler) ⬜ — needs AWS creds
+- P6-4 Neo4j attack path graph ✅
+- P6-5 Chain Discovery Agent v2 ✅
+
 **Next session should (resume here):**
-1. P6-3: Cloud Security — Prowler/ScoutSuite (needs AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY in .env)
-2. P6-4: Neo4j attack path graph (needs Neo4j container added to docker-compose)
+1. P6-3: Cloud Security — Prowler (needs AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY in .env)
+2. Phase 7 planning — Enterprise Features
 
 **Restart Celery command:**
 ```bash
