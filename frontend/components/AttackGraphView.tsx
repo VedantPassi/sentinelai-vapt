@@ -94,7 +94,7 @@ export default function AttackGraphView({ scanId }: Props) {
         {
           selector: "node",
           style: {
-            "background-color": (el) => {
+            "background-color": (el: cytoscape.NodeSingular) => {
               const t = el.data("nodeType");
               if (t === "finding") return SEVERITY_COLOR[el.data("severity")] ?? SEVERITY_COLOR.info;
               return NODE_COLOR[t] ?? "#6b7280";
@@ -106,9 +106,9 @@ export default function AttackGraphView({ scanId }: Props) {
             "text-margin-y": 5,
             "text-wrap": "wrap",
             "text-max-width": "90px",
-            width: (el) => el.data("nodeType") === "chain" ? 52 : 38,
-            height: (el) => el.data("nodeType") === "chain" ? 52 : 38,
-            shape: (el) => {
+            width: (el: cytoscape.NodeSingular) => el.data("nodeType") === "chain" ? 52 : 38,
+            height: (el: cytoscape.NodeSingular) => el.data("nodeType") === "chain" ? 52 : 38,
+            shape: (el: cytoscape.NodeSingular) => {
               const t = el.data("nodeType");
               if (t === "chain") return "diamond";
               if (t === "step") return "round-rectangle";
