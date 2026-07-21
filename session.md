@@ -242,9 +242,36 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 - P6-4 Neo4j attack path graph ✅
 - P6-5 Chain Discovery Agent v2 ✅
 
+**What was done (session 19 - P6-3):**
+- AWS IAM user `sentinelai-prowler` created (ReadOnlyAccess + SecurityAudit policies)
+- AWS creds added to .env (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION)
+- Prowler 5.35.0 installed in isolated `backend/.prowler-venv` (Python 3.12, no venv conflict)
+- `backend/scanners/prowler_scanner.py` — Prowler subprocess wrapper, OCSF v5 parser
+  - Uses `--output-directory` + `--output-filename`, reads JSON file (not stdout)
+  - OCSF v5 fields: metadata.event_code, finding_info.{title,desc}, resources[0].{uid,region}, cloud.account.uid, remediation.{desc,references}
+- `backend/agents/cloud_agent.py` — runs Prowler, LLM enriches top 15 critical/high findings
+- `backend/agents/recon_agent.py` — skip for `cloud` type
+- `backend/agents/planner_agent.py` — skip for `cloud` type
+- `backend/agents/runtime.py` — cloud node added: planner→cloud→validator→chain→graph
+- `frontend/app/(dashboard)/agent-scans/page.tsx` — "Cloud (AWS)" scan type added
+- Verified: 18 findings (2 critical, 2 high, 8 medium, 6 low) from real AWS account, 4 LLM-enriched
+
+**P6-3 Cloud Security (Prowler) — COMPLETE ✅**
+
+**Phase 6 — ALL COMPLETE ✅**
+- P6-1 Cytoscape chain graph ✅
+- P6-2 Container scanning (Trivy) ✅
+- P6-3 Cloud Security (Prowler) ✅
+- P6-4 Neo4j attack path graph ✅
+- P6-5 Chain Discovery Agent v2 ✅
+
 **Next session should (resume here):**
-1. P6-3: Cloud Security — Prowler (needs AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY in .env)
-2. Phase 7 planning — Enterprise Features
+Phase 7 planning — Enterprise Features:
+- Active Directory / IAM (BloodHound CE)
+- Continuous monitoring mode
+- Fine-tuned security LLMs
+- SIEM/SOAR integrations
+- On-premise deployment
 
 **Restart Celery command:**
 ```bash

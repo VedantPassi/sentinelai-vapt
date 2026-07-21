@@ -124,7 +124,7 @@
 |------|--------|-------|
 | Cytoscape.js chain graph (P6-1) | ✅ | ChainGraph.tsx — chain selector + graph + node tap detail; verified with real scan |
 | Container/K8s: Trivy + kube-bench (P6-2) | ✅ | trivy_scanner.py + container_agent.py — 379 findings, 26 LLM-enriched |
-| Cloud Security: Prowler/ScoutSuite (P6-3) | ⬜ | Needs AWS creds |
+| Cloud Security: Prowler/ScoutSuite (P6-3) | ✅ | prowler_scanner.py + cloud_agent.py — 18 findings on real AWS, LLM-enriched |
 | Neo4j attack path graph (P6-4) | ✅ | graph_agent + attack_graph API + AttackGraphView — Cytoscape + blast radius tab |
 | Chain Discovery Agent v2 (P6-5) | ✅ | Cross-surface kill chains — network→web→container→secrets pivots, surface badges in UI |
 

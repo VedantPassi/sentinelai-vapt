@@ -48,7 +48,7 @@ async def run(state: AgentState) -> AgentState:
     state["progress_events"].append(_event("started", "Cloud agent starting — running Prowler"))
 
     config = state.get("config") or {}
-    services = config.get("cloud_services", ["iam", "s3", "ec2", "guardduty", "cloudtrail"])
+    services = config.get("services") or config.get("cloud_services") or ["iam", "s3", "ec2", "guardduty", "cloudtrail"]
 
     state["progress_events"].append(
         _event("started", f"Prowler scanning services: {', '.join(services)}")
