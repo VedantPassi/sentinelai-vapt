@@ -232,6 +232,42 @@ export async function listAgentScanChains(id: string): Promise<AgentChain[]> {
   return res.chains;
 }
 
+export interface GraphNode {
+  id: string;
+  label: string;
+  type: "finding" | "chain" | "step";
+  severity: string | null;
+  surface: string | null;
+  risk_score: number | null;
+}
+
+export interface GraphEdge {
+  source: string;
+  target: string;
+  relation: string;
+}
+
+export interface AttackGraph {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+}
+
+export interface BlastRadius {
+  finding_id: string;
+  finding_title: string;
+  chains_affected: number;
+  chain_titles: string[];
+  max_impact: string;
+}
+
+export async function getAttackGraph(scanId: string): Promise<AttackGraph> {
+  return request<AttackGraph>(`/attack-graph/scan/${scanId}`);
+}
+
+export async function getBlastRadius(scanId: string): Promise<BlastRadius[]> {
+  return request<BlastRadius[]>(`/attack-graph/scan/${scanId}/blast-radius`);
+}
+
 export function connectAgentScanWS(
   scanId: string,
   onEvent: (event: ProgressEvent | { node: string; status: string; message: string; error?: string }) => void

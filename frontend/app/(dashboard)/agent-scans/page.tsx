@@ -18,6 +18,7 @@ import {
   Target,
 } from "@/lib/api";
 import ChainGraph from "@/components/ChainGraph";
+import AttackGraphView from "@/components/AttackGraphView";
 
 const SEVERITY_COLOR: Record<string, string> = {
   critical: "text-red-600 bg-red-50",
@@ -373,6 +374,14 @@ export default function AgentScansPage() {
             <span className="text-gray-400 font-normal">({chains.length})</span>
           </h2>
           <ChainGraph chains={chains} findings={findings} />
+        </div>
+      )}
+
+      {/* Neo4j Attack Path Graph */}
+      {activeScan?.status === "completed" && (
+        <div className="bg-white border rounded-lg p-5">
+          <h2 className="font-semibold text-lg mb-3">Attack Path Graph</h2>
+          <AttackGraphView scanId={activeScan.id} />
         </div>
       )}
     </div>
