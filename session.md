@@ -205,10 +205,23 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 
 **P6-2 Container scanning — COMPLETE ✅**
 
+**What was done (session 17 - P6-5):**
+- `backend/agents/chain_agent.py` — upgraded to v2: cross-surface kill chains
+  - Includes `open` high/critical findings (not just confirmed)
+  - Groups findings by surface (web/network/container/secrets) before LLM
+  - Prompt models MITRE kill chain stages, explicitly requests cross-surface pivots
+  - 30 finding cap (was 20), sorted by severity tier + risk_score
+  - Each step now includes `surface` field
+- `backend/agents/state.py` — `ChainStep.surface: str | None` added
+- `frontend/lib/api.ts` — `ChainStep.surface: string | null` added
+- `frontend/components/ChainGraph.tsx` — surface badge (purple) in node detail panel
+- Verified: synthetic 5-finding cross-surface test → 2 chains, both cross-surface (network→web, web→container→secrets)
+
+**P6-5 Chain Discovery Agent v2 — COMPLETE ✅**
+
 **Next session should (resume here):**
-1. Phase 6 track 3: Cloud Security — Prowler/ScoutSuite (needs AWS creds configured in .env)
-2. Phase 6 track 4: Neo4j attack path graph
-3. Phase 6 track 5: Chain Discovery Agent v2 (cross-surface kill chains)
+1. P6-3: Cloud Security — Prowler/ScoutSuite (needs AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY in .env)
+2. P6-4: Neo4j attack path graph (needs Neo4j container added to docker-compose)
 
 **Restart Celery command:**
 ```bash
