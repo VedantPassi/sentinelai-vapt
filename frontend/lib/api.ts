@@ -210,6 +210,7 @@ export interface ChainStep {
   action: string;
   mitre_id: string | null;
   finding_id: string | null;
+  surface: string | null;
 }
 
 export interface AgentChain {

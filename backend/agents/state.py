@@ -48,6 +48,7 @@ class ChainStep:
     action: str
     mitre_id: str
     finding_id: str | None = None
+    surface: str | None = None  # web | network | container | secrets
 
 
 @dataclass

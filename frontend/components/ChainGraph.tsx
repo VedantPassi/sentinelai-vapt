@@ -47,6 +47,7 @@ function buildElements(
         severity,
         findingId: step.finding_id,
         unresolved: Boolean(step.finding_id) && !finding,
+        surface: step.surface ?? null,
       },
     });
   });
@@ -77,6 +78,7 @@ export default function ChainGraph({ chains, findings }: ChainGraphProps) {
     mitreId: string | null;
     severity: string;
     unresolved: boolean;
+    surface: string | null;
   } | null>(null);
 
   const selectedChain = chains.find((c) => c.id === selectedChainId) ?? null;
@@ -153,6 +155,7 @@ export default function ChainGraph({ chains, findings }: ChainGraphProps) {
         mitreId: d.mitreId,
         severity: d.severity,
         unresolved: d.unresolved,
+        surface: d.surface,
       });
     });
 
@@ -244,6 +247,11 @@ export default function ChainGraph({ chains, findings }: ChainGraphProps) {
               <span className="font-medium">{selectedNode.label}</span>
               {selectedNode.mitreId && (
                 <span className="text-xs text-gray-500 font-mono">{selectedNode.mitreId}</span>
+              )}
+              {selectedNode.surface && (
+                <span className="text-xs text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded font-mono">
+                  {selectedNode.surface}
+                </span>
               )}
               {selectedNode.unresolved && (
                 <span className="text-xs text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded">
