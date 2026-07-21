@@ -7,6 +7,7 @@ from agents.state import AgentState
 
 def build_graph() -> StateGraph:
     from agents.chain_agent import run as chain_run
+    from agents.cloud_agent import run as cloud_run
     from agents.container_agent import run as container_run
     from agents.graph_agent import run as graph_run
     from agents.network_agent import run as network_run
@@ -22,6 +23,7 @@ def build_graph() -> StateGraph:
     graph.add_node("webapp", webapp_run)
     graph.add_node("network", network_run)
     graph.add_node("container", container_run)
+    graph.add_node("cloud", cloud_run)
     graph.add_node("validator", validator_run)
     graph.add_node("chain", chain_run)
     graph.add_node("graph", graph_run)
@@ -35,12 +37,14 @@ def build_graph() -> StateGraph:
             "webapp": "webapp",
             "network": "network",
             "container": "container",
+            "cloud": "cloud",
             "end": END,
         },
     )
     graph.add_edge("webapp", "validator")
     graph.add_edge("network", "validator")
     graph.add_edge("container", "validator")
+    graph.add_edge("cloud", "validator")
     graph.add_edge("validator", "chain")
     graph.add_edge("chain", "graph")
     graph.add_edge("graph", END)
@@ -56,6 +60,8 @@ def _route_by_target_type(state: AgentState) -> str:
         return "network"
     if t == "container":
         return "container"
+    if t == "cloud":
+        return "cloud"
     return "end"
 
 
