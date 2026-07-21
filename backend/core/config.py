@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     celery_broker_url: str = "redis://localhost:6379/1"
     celery_result_backend: str = "redis://localhost:6379/2"
 
+    # Neo4j
+    neo4j_uri: str = "bolt://localhost:7687"
+    neo4j_user: str = "neo4j"
+    neo4j_password: str = "sentineldev"
+
     # Integrations
     slack_webhook_url: str = ""
     jira_base_url: str = ""
