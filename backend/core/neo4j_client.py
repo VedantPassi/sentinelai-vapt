@@ -5,7 +5,7 @@ from typing import Any
 
 from neo4j import AsyncGraphDatabase, AsyncDriver
 
-from core.config import get_settings
+from core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -15,10 +15,9 @@ _driver: AsyncDriver | None = None
 def _get_driver() -> AsyncDriver:
     global _driver
     if _driver is None:
-        s = get_settings()
         _driver = AsyncGraphDatabase.driver(
-            s.neo4j_uri,
-            auth=(s.neo4j_user, s.neo4j_password),
+            settings.neo4j_uri,
+            auth=(settings.neo4j_user, settings.neo4j_password),
         )
     return _driver
 
