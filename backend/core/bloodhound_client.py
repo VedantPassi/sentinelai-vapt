@@ -74,7 +74,7 @@ async def get_attack_paths(limit: int = 10) -> list[dict[str, Any]]:
 async def get_domain_stats() -> dict[str, Any]:
     """High-level AD domain statistics."""
     try:
-        data = await get("/api/v2/asset-isolation/domains")
+        data = await get("/api/v2/available-domains")
         domains = data.get("data", []) or []
         return domains[0] if domains else {}
     except Exception as exc:
