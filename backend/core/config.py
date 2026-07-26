@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     neo4j_user: str = "neo4j"
     neo4j_password: str = "sentineldev"
 
+    # BloodHound CE
+    bloodhound_url: str = "http://localhost:8080"
+    bloodhound_user: str = "admin"
+    bloodhound_secret: str = ""
+
     # Integrations
     slack_webhook_url: str = ""
     jira_base_url: str = ""
