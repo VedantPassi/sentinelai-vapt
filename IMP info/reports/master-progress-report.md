@@ -1,8 +1,8 @@
 # SentinelAI — Master Progress Report
 
-**Date:** 2026-06-30
-**Phases Complete:** 0 → 4 (5 of 7)
-**Status:** Active development
+**Date:** 2026-07-26
+**Phases Complete:** 0 → 6, P7-1 ✅ P7-2 ✅ (P7-3 pending)
+**Status:** Active development — Phase 7 in progress
 
 ---
 
@@ -251,13 +251,39 @@ Range: 0–100. FP always = 0.
 
 ---
 
-## What's Left (Phases 5–7)
+## Phase 5 — Reporting & Integrations ✅
+P5-1 chain_agent, P5-2 Redis WS streaming, P5-3 SARIF export, P5-4 PDF improvements, P5-5 Jira+Slack. See phase-5-audit.md.
 
-| Phase | Name | Key Deliverables |
-|-------|------|-----------------|
-| 5 | Reporting & Integrations | Real-time WS streaming, attack chain agent, Jira/Slack integration, SARIF export, WS auth |
-| 6 | Advanced Modules | Cloud/K8s scanning, Neo4j attack graph, Weaviate semantic search |
-| 7 | Enterprise Features | SSO/SAML, compliance reports (SOC2/OWASP), multi-tenant billing |
+## Phase 6 — Advanced Modules ✅
+P6-1 Cytoscape chain graph, P6-2 Trivy container scanning, P6-3 Prowler cloud (AWS), P6-4 Neo4j attack graph, P6-5 chain agent v2 cross-surface kill chains. See phase-6-audit.md.
+
+## Phase 7 — Enterprise Features 🔵 IN PROGRESS
+
+### P7-1 BloodHound CE — Active Directory Attack Paths ✅
+- BloodHound CE deployed (Docker, localhost:8080)
+- Synthetic AD: TESTCORP.LOCAL, charlie→bob→alice→Domain Admins via WriteDACL+GenericAll
+- `bloodhound_client.py` uses `/api/v2/graphs/cypher` (Cypher queries, not dead REST)
+- `bloodhound_agent.py` — paths → FindingData(category=ad, severity=critical) + LLM enrichment
+- Pipeline route: `target_type="ad"` → bloodhound node
+- Frontend: "Active Directory (BloodHound)" scan type
+
+### P7-2 Continuous Monitoring — Celery Beat ✅
+- `ScheduledScan` model: target, scan_type, interval_hours, next_run_at, is_active
+- `workers/beat_worker.py`: 60s tick → `check_due_schedules` → creates ScanJob → enqueues run_agent_task
+- Full CRUD API: `POST/GET/PATCH/DELETE /schedules`
+- Frontend `/schedules` page: create form, pause/resume/delete table
+- Beat start: `celery -A workers.beat_worker beat --loglevel=info`
+
+### P7-3 SIEM Integration — PENDING
+Forward findings to Splunk HEC / Elasticsearch after each scan completes.
+
+## What's Left
+
+| Item | Phase |
+|------|-------|
+| P7-3 SIEM integration (Splunk HEC + Elasticsearch) | 7 |
+| Fine-tuned security LLMs | 7 |
+| On-premise deployment guide | 7 |
 
 ---
 
