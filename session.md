@@ -60,10 +60,10 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 | 3 | AI Agent Framework | ✅ Complete |
 | 4 | Validation & Risk Scoring | ✅ Complete |
 | 5 | Reporting & Integrations | ✅ Complete |
-| 6 | Advanced Modules (Cloud/K8s) | ⬜ Not Started |
-| 7 | Enterprise Features | ⬜ Not Started |
+| 6 | Advanced Modules (Cloud/K8s) | ✅ Complete |
+| 7 | Enterprise Features | 🔵 In Progress (P7-1 ✅ P7-2 ✅ P7-3 ⬜) |
 
-**Current Phase: 6 — NOT STARTED**
+**Current Phase: 7 — IN PROGRESS**
 
 ---
 
@@ -265,15 +265,59 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 - P6-4 Neo4j attack path graph ✅
 - P6-5 Chain Discovery Agent v2 ✅
 
-**Next session should (resume here):**
-Phase 7 planning — Enterprise Features:
-- Active Directory / IAM (BloodHound CE)
-- Continuous monitoring mode
-- Fine-tuned security LLMs
-- SIEM/SOAR integrations
-- On-premise deployment
+**What was done (session 20 - P7-1 BloodHound CE):**
+- BloodHound CE deployed via Docker at localhost:8080 (ports remapped: 7475/7688 for Neo4j to avoid conflict with SentinelAI Neo4j at 7474/7687)
+- Synthetic AD dataset created + uploaded: TESTCORP.LOCAL, alice/bob/charlie users
+  - Attack path: charlie →(WriteDACL)→ bob →(GenericAll)→ alice →(MemberOf)→ Domain Admins
+  - Upload via bhce_seed.py (scratchpad) — job Complete, 4 files ingested
+- `backend/core/bloodhound_client.py` — rewrote dead REST endpoints to use /api/v2/graphs/cypher:
+  - `get_attack_paths()` — Cypher shortestPath (User → Group containing "DOMAIN ADMINS")
+  - `get_node_shortest_paths(node_id, node_type)` — path from specific node to DA
+  - `get_high_value_targets()` — nodes with admincount=true
+  - `_cypher()` / `_cypher_raw()` helpers
+- `backend/agents/bloodhound_agent.py` (new) — BH paths → FindingData(category="ad", severity="critical") + LLM enrichment
+- `backend/agents/runtime.py` — bloodhound node + "ad" conditional route
+- `backend/agents/recon_agent.py` + `planner_agent.py` — "ad" added to skip list
+- `frontend/app/(dashboard)/agent-scans/page.tsx` — "Active Directory (BloodHound)" scan type added
+- Committed: fd51085
 
-**Restart Celery command:**
+**P7-1 BloodHound CE — COMPLETE ✅**
+
+**What was done (session 20 continued - P7-2 Celery Beat):**
+- `backend/models/models.py` — ScheduledScan model (target_id, scan_type, interval_hours, config, is_active, last_run_at, next_run_at)
+- `backend/alembic/versions/d7a6f3c81899_add_scheduled_scans.py` — migration generated + applied
+- `backend/workers/beat_worker.py` — Beat schedule (60s tick) + check_due_schedules task:
+  - Queries ScheduledScan WHERE is_active=True AND next_run_at <= now
+  - Creates ScanJob, enqueues run_agent_task via send_task(), advances next_run_at
+- `backend/api/v1/schedules.py` — CRUD: POST/GET/PATCH/DELETE /schedules (org-scoped)
+- `backend/main.py` — schedules router registered
+- `frontend/app/(dashboard)/schedules/page.tsx` (new) — create form, live table, pause/resume/delete
+- `frontend/lib/api.ts` — Schedule interface + listSchedules/createSchedule/toggleSchedule/deleteSchedule
+- `frontend/app/(dashboard)/layout.tsx` — "Schedules" nav link added
+- Committed: 12a9e9e, pushed to origin/main (dbc74c6 after reports)
+
+**Beat start command:**
+```bash
+cd "/Users/vedantpassi/Desktop/Projects/AI VAPT/backend"
+PATH="/opt/homebrew/bin:$PATH" PYTHONPATH=$(pwd) .venv/bin/celery -A workers.beat_worker beat --loglevel=info
+```
+
+**P7-2 Continuous Monitoring — COMPLETE ✅**
+
+**Phase 7 status:**
+- P7-1 BloodHound CE (AD attack paths) ✅
+- P7-2 Celery Beat (continuous monitoring) ✅
+- P7-3 SIEM integration ⬜ — NEXT
+
+**Next session should (resume here):**
+Start P7-3 — SIEM integration:
+- Forward scan findings to Splunk HEC and/or Elasticsearch after each scan completes
+- Files to create: `backend/core/siem_client.py`, `backend/workers/siem_worker.py`
+- Config needed: SPLUNK_HEC_URL, SPLUNK_HEC_TOKEN, ES_URL, ES_INDEX in .env
+
+**Git HEAD:** dbc74c6
+
+**Restart Celery worker command:**
 ```bash
 cd "/Users/vedantpassi/Desktop/Projects/AI VAPT/backend"
 pkill -f "celery.*agent_worker" 2>/dev/null; sleep 1
