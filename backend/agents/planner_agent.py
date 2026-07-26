@@ -49,7 +49,7 @@ async def run(state: AgentState) -> AgentState:
     state["current_node"] = "planner"
     state["progress_events"].append(_event("started", "Attack planner starting"))
 
-    if state.get("target_type") in ("container", "cloud"):
+    if state.get("target_type") in ("container", "cloud", "ad"):
         label = state.get("target_type", "")
         state["attack_plan"] = AttackPlan(summary=f"{label} scan — planner skipped", vectors=[])
         state["progress_events"].append(

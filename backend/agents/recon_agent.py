@@ -37,7 +37,7 @@ async def run(state: AgentState) -> AgentState:
     state["current_node"] = "recon"
     state["progress_events"].append(_event("recon", "started", "Recon agent starting"))
 
-    if state.get("target_type") in ("container", "cloud"):
+    if state.get("target_type") in ("container", "cloud", "ad"):
         state["recon_data"] = ReconData()
         state["progress_events"].append(
             _event("recon", "completed", f"Recon skipped — {state.get('target_type')} scan")

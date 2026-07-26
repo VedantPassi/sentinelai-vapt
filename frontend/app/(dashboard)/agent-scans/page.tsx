@@ -162,7 +162,7 @@ function FindingCard({
 export default function AgentScansPage() {
   const [targets, setTargets] = useState<Target[]>([]);
   const [selectedTarget, setSelectedTarget] = useState("");
-  const [scanType, setScanType] = useState<"web" | "api" | "network" | "container" | "cloud">("web");
+  const [scanType, setScanType] = useState<"web" | "api" | "network" | "container" | "cloud" | "ad">("web");
   const [activeScan, setActiveScan] = useState<AgentScan | null>(null);
   const [events, setEvents] = useState<ProgressEvent[]>([]);
   const [findings, setFindings] = useState<AgentFinding[]>([]);
@@ -307,6 +307,7 @@ export default function AgentScansPage() {
               <option value="network">Network</option>
               <option value="container">Container Image</option>
               <option value="cloud">Cloud (AWS)</option>
+              <option value="ad">Active Directory (BloodHound)</option>
             </select>
           </div>
         </div>

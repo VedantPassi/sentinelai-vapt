@@ -61,11 +61,41 @@ async def post(path: str, body: dict[str, Any]) -> dict[str, Any]:
         return resp.json()
 
 
-async def get_attack_paths(limit: int = 10) -> list[dict[str, Any]]:
-    """Fetch shortest paths to Domain Admins."""
+async def _cypher(query: str) -> list[dict[str, Any]]:
+    """Run a Cypher query via BloodHound CE graph endpoint."""
     try:
-        data = await get("/api/v2/attack-paths", params={"limit": limit})
-        return data.get("data", {}).get("paths", []) or []
+        data = await post("/api/v2/graphs/cypher", {"query": query})
+        return data.get("data", {}).get("nodes", []) or []
+    except Exception as exc:
+        logger.warning("BloodHound cypher failed: %s", exc)
+        return []
+
+
+async def _cypher_raw(query: str) -> dict[str, Any]:
+    try:
+        data = await post("/api/v2/graphs/cypher", {"query": query})
+        return data.get("data", {}) or {}
+    except Exception as exc:
+        logger.warning("BloodHound cypher_raw failed: %s", exc)
+        return {}
+
+
+async def get_attack_paths(limit: int = 10) -> list[dict[str, Any]]:
+    """Shortest paths from any non-DA user to Domain Admins group."""
+    query = f"""
+    MATCH p=shortestPath((u:User)-[*1..10]->(g:Group))
+    WHERE g.name CONTAINS 'DOMAIN ADMINS'
+    AND NOT u.name CONTAINS 'DOMAIN ADMINS'
+    RETURN p LIMIT {limit}
+    """
+    try:
+        raw = await _cypher_raw(query)
+        edges = raw.get("edges", []) or []
+        nodes = raw.get("nodes", []) or []
+        paths: list[dict[str, Any]] = []
+        if nodes:
+            paths.append({"nodes": nodes, "edges": edges})
+        return paths
     except Exception as exc:
         logger.warning("BloodHound get_attack_paths failed: %s", exc)
         return []
@@ -95,14 +125,28 @@ async def search_nodes(query: str, node_type: str | None = None) -> list[dict[st
         return []
 
 
-async def get_node_shortest_paths(node_id: str, node_type: str) -> list[dict[str, Any]]:
-    """Get shortest paths from a node to Domain Admins."""
+async def get_node_shortest_paths(node_id: str, node_type: str = "User") -> list[dict[str, Any]]:
+    """Shortest paths from a specific node to Domain Admins."""
+    query = f"""
+    MATCH p=shortestPath((src:{node_type})-[*1..10]->(g:Group))
+    WHERE src.objectid = '{node_id}'
+    AND g.name CONTAINS 'DOMAIN ADMINS'
+    RETURN p LIMIT 5
+    """
     try:
-        data = await get(
-            f"/api/v2/graph-search",
-            params={"object_id": node_id, "node_type": node_type},
-        )
-        return data.get("data", {}).get("paths", []) or []
+        raw = await _cypher_raw(query)
+        return [{"nodes": raw.get("nodes", []), "edges": raw.get("edges", [])}]
     except Exception as exc:
         logger.warning("BloodHound node paths failed: %s", exc)
         return []
+
+
+async def get_high_value_targets() -> list[dict[str, Any]]:
+    """Users/computers with most inbound attack paths (choke points)."""
+    query = """
+    MATCH (n)
+    WHERE n.admincount = true
+    RETURN n.name as name, n.objectid as id, labels(n)[0] as type
+    ORDER BY name LIMIT 20
+    """
+    return await _cypher(query)
