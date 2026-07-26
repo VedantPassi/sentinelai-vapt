@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from api.v1.agent_scans import router as agent_scans_router
 from api.v1.attack_graph import router as attack_graph_router
+from api.v1.schedules import router as schedules_router
 from api.v1.auth import router as auth_router
 from api.v1.findings import router as findings_router
 from api.v1.health import router as health_router
@@ -33,3 +34,4 @@ app.include_router(findings_router, prefix="/api/v1")
 app.include_router(sarif_router, prefix="/api/v1")
 app.include_router(integrations_router, prefix="/api/v1")
 app.include_router(attack_graph_router, prefix="/api/v1")
+app.include_router(schedules_router, prefix="/api/v1")

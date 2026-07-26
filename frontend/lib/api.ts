@@ -268,6 +268,44 @@ export async function getBlastRadius(scanId: string): Promise<BlastRadius[]> {
   return request<BlastRadius[]>(`/attack-graph/scan/${scanId}/blast-radius`);
 }
 
+// Schedules
+export interface Schedule {
+  id: string;
+  target_id: string;
+  scan_type: string;
+  interval_hours: number;
+  is_active: boolean;
+  last_run_at: string | null;
+  next_run_at: string;
+  created_at: string;
+}
+
+export interface ScheduleCreate {
+  target_id: string;
+  scan_type: string;
+  interval_hours: number;
+  config?: Record<string, unknown>;
+}
+
+export async function listSchedules(): Promise<Schedule[]> {
+  return request<Schedule[]>("/schedules");
+}
+
+export async function createSchedule(data: ScheduleCreate): Promise<Schedule> {
+  return request<Schedule>("/schedules", { method: "POST", body: JSON.stringify(data) });
+}
+
+export async function toggleSchedule(id: string, is_active: boolean): Promise<Schedule> {
+  return request<Schedule>(`/schedules/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ is_active }),
+  });
+}
+
+export async function deleteSchedule(id: string): Promise<void> {
+  return request<void>(`/schedules/${id}`, { method: "DELETE" });
+}
+
 export function connectAgentScanWS(
   scanId: string,
   onEvent: (event: ProgressEvent | { node: string; status: string; message: string; error?: string }) => void

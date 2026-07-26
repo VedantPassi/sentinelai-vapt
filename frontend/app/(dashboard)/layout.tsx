@@ -23,6 +23,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { href: "/dashboard", label: "Overview" },
     { href: "/targets", label: "Targets" },
     { href: "/agent-scans", label: "Agent Scans" },
+    { href: "/schedules", label: "Schedules" },
   ];
 
   return (

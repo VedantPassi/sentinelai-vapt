@@ -60,6 +60,7 @@ class Target(Base):
 
     organization: Mapped["Organization"] = relationship("Organization", back_populates="targets")
     scan_jobs: Mapped[list["ScanJob"]] = relationship("ScanJob", back_populates="target")
+    scheduled_scans: Mapped[list["ScheduledScan"]] = relationship("ScheduledScan", back_populates="target")
 
 
 class ScanJob(Base):
@@ -130,3 +131,21 @@ class AttackChain(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     scan_job: Mapped["ScanJob"] = relationship("ScanJob", back_populates="attack_chains")
+
+
+class ScheduledScan(Base):
+    __tablename__ = "scheduled_scans"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    target_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("targets.id", ondelete="CASCADE"), nullable=False
+    )
+    scan_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    interval_hours: Mapped[float] = mapped_column(Float, nullable=False, default=24.0)
+    config: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    last_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    next_run_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    target: Mapped["Target"] = relationship("Target", back_populates="scheduled_scans")
