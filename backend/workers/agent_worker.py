@@ -143,6 +143,9 @@ async def _run(scan_id: str, target_url: str, target_type: str, config: dict) ->
             "error": final_state.get("error"),
         })
 
+        if settings.siem_enabled and scan.status == "completed":
+            celery_app.send_task("workers.siem_worker.ship_to_siem", args=[scan_id])
+
     return {
         "findings": len(final_state.get("findings", [])),
         "chains": len(final_state.get("attack_chains", [])),

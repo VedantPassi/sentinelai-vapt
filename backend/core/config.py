@@ -46,5 +46,15 @@ class Settings(BaseSettings):
     jira_api_token: str = ""
     jira_project_key: str = ""
 
+    # SIEM
+    siem_enabled: bool = False
+    splunk_hec_url: str = ""
+    splunk_hec_token: str = ""
+    splunk_index: str = "sentinelai"
+    es_url: str = ""
+    es_index: str = "sentinelai-findings"
+    es_user: str = ""
+    es_password: str = ""
+
 
 settings = Settings()
