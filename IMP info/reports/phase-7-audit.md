@@ -1,8 +1,8 @@
 # Phase 7 Audit Report — Enterprise Features
 
 **Date:** 2026-07-26  
-**Git HEAD:** 12a9e9e  
-**Status:** IN PROGRESS 🔵 (P7-1 ✅ P7-2 ✅ P7-3 pending)
+**Git HEAD:** cee2ca1  
+**Status:** COMPLETE ✅ (P7-1 ✅ P7-2 ✅ P7-3 ✅)
 
 ---
 
@@ -94,14 +94,46 @@ Continuous monitoring: Celery Beat → `check_due_schedules` (60s) → `run_agen
 
 ---
 
-## P7-3 — SIEM Integration (PENDING)
+## P7-3 — SIEM Integration ✅
 
-Forward scan findings to Splunk HEC or Elasticsearch as structured security events.
+**Delivered:**
+- `backend/core/siem_client.py` (new):
+  - `_send_to_splunk()` — POSTs newline-delimited JSON to Splunk HEC `/services/collector/event`; auth via `Splunk <token>` header
+  - `_send_to_elasticsearch()` — POSTs ndjson bulk payload to `/_bulk`; optional basic auth
+  - `forward_to_siem()` — calls both if configured; swallows `HTTPError` (fire-and-forget)
+- `backend/workers/siem_worker.py` (new):
+  - Celery task `ship_to_siem(scan_id)` registered on `agent_worker.celery_app`
+  - Loads `ScanJob` + `Target` + all `Finding` rows from DB
+  - Builds structured event per finding: scan_id, target_url, scan_type, finding_id, title, category, severity, status, srs_score, remediation, timestamp
+  - Calls `forward_to_siem(events)`
+- `backend/core/config.py` — new SIEM settings block:
+  ```
+  siem_enabled: bool = False
+  splunk_hec_url: str = ""
+  splunk_hec_token: str = ""
+  splunk_index: str = "sentinelai"
+  es_url: str = ""
+  es_index: str = "sentinelai-findings"
+  es_user: str = ""
+  es_password: str = ""
+  ```
+- `backend/workers/agent_worker.py` — after scan completes + DB writes done:
+  ```python
+  if settings.siem_enabled and scan.status == "completed":
+      celery_app.send_task("workers.siem_worker.ship_to_siem", args=[scan_id])
+  ```
 
-Planned:
-- `backend/core/siem_client.py` — Splunk HEC + Elasticsearch bulk API clients
-- `backend/workers/siem_worker.py` — post-scan Celery task to ship findings
-- Config: `SPLUNK_HEC_URL`, `SPLUNK_HEC_TOKEN`, `ES_URL`, `ES_INDEX` in `.env`
+**Enable in `.env`:**
+```
+SIEM_ENABLED=true
+SPLUNK_HEC_URL=https://splunk:8088
+SPLUNK_HEC_TOKEN=<token>
+SPLUNK_INDEX=sentinelai
+ES_URL=http://elasticsearch:9200
+ES_INDEX=sentinelai-findings
+```
+
+**Verified:** syntax OK all 4 files, `workers.siem_worker.ship_to_siem` in `celery_app.tasks`. Pushed cee2ca1.
 
 ---
 

@@ -304,18 +304,40 @@ PATH="/opt/homebrew/bin:$PATH" PYTHONPATH=$(pwd) .venv/bin/celery -A workers.bea
 
 **P7-2 Continuous Monitoring — COMPLETE ✅**
 
-**Phase 7 status:**
+**What was done (session 21 - P7-3 SIEM Integration):**
+- `backend/core/siem_client.py` (new) — `_send_to_splunk` + `_send_to_elasticsearch` + `forward_to_siem`; async httpx, fire-and-forget
+- `backend/workers/siem_worker.py` (new) — Celery task `ship_to_siem(scan_id)`: loads findings+target from DB, builds event dicts, calls `forward_to_siem`
+- `backend/core/config.py` — added `siem_enabled`, `splunk_hec_url`, `splunk_hec_token`, `splunk_index`, `es_url`, `es_index`, `es_user`, `es_password`
+- `backend/workers/agent_worker.py` — after scan completes: `celery_app.send_task("workers.siem_worker.ship_to_siem", ...)` if `settings.siem_enabled`
+- Verified: syntax OK all 4 files, task registers on celery_app
+- Pushed: cee2ca1
+
+**P7-3 SIEM Integration — COMPLETE ✅**
+
+**Phase 7 — ALL COMPLETE ✅**
 - P7-1 BloodHound CE (AD attack paths) ✅
 - P7-2 Celery Beat (continuous monitoring) ✅
-- P7-3 SIEM integration ⬜ — NEXT
+- P7-3 SIEM integration (Splunk HEC + Elasticsearch) ✅
+
+**To enable SIEM — add to .env:**
+```
+SIEM_ENABLED=true
+SPLUNK_HEC_URL=https://splunk:8088
+SPLUNK_HEC_TOKEN=<token>
+SPLUNK_INDEX=sentinelai
+ES_URL=http://elasticsearch:9200
+ES_INDEX=sentinelai-findings
+ES_USER=elastic
+ES_PASSWORD=<password>
+```
 
 **Next session should (resume here):**
-Start P7-3 — SIEM integration:
-- Forward scan findings to Splunk HEC and/or Elasticsearch after each scan completes
-- Files to create: `backend/core/siem_client.py`, `backend/workers/siem_worker.py`
-- Config needed: SPLUNK_HEC_URL, SPLUNK_HEC_TOKEN, ES_URL, ES_INDEX in .env
+Phase 7 complete. Options:
+1. End-to-end demo run (all scan types)
+2. Phase 8 — polish/hardening (SSO, compliance reports, multi-tenant billing)
+3. On-premise deployment guide
 
-**Git HEAD:** dbc74c6
+**Git HEAD:** cee2ca1
 
 **Restart Celery worker command:**
 ```bash
