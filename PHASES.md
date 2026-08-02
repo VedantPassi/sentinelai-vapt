@@ -118,7 +118,7 @@
 
 ---
 
-## Phase 6 — Advanced Modules 🔵
+## Phase 6 — Advanced Modules ✅
 
 | Task | Status | Notes |
 |------|--------|-------|
@@ -130,11 +130,29 @@
 
 ---
 
-## Phase 7 — Enterprise Features ⬜
-_(Months 7–12 — detailed tasks TBD at Phase 6 completion)_
+## Phase 7 — Enterprise Features ✅
 
-- Active Directory / IAM (BloodHound CE)
-- Continuous monitoring mode
-- Fine-tuned security LLMs
-- SIEM/SOAR integrations
-- On-premise deployment
+| Task | Status | Notes |
+|------|--------|-------|
+| BloodHound CE — AD attack paths (P7-1) | ✅ | bloodhound_client.py Cypher; bloodhound_agent.py; "ad" route in runtime |
+| Continuous monitoring — Celery Beat (P7-2) | ✅ | ScheduledScan model; beat_worker.py 60s tick; /schedules CRUD API + frontend page |
+| SIEM integration — Splunk HEC + ES (P7-3) | ✅ | siem_client.py; siem_worker.py; ship_to_siem triggered post-scan if SIEM_ENABLED |
+| End-to-end demo — all 4 scan types | ✅ | Network ✅ Container ✅ Cloud ✅ AD ✅ — verified 2026-08-03 |
+| Bug fix: Neo4j driver event-loop binding | ✅ | _close_neo4j() in agent_worker.py finally block (16e0804) |
+| Bug fix: Prowler AWS creds in Celery worker | ✅ | load_dotenv at top of agent_worker.py (19a0f1a) |
+| Bug fix: BH CE nodes/edges dict→list | ✅ | _to_list() helper in bloodhound_client.py (a938554) |
+
+**Git HEAD:** a938554
+
+---
+
+## Phase 8 — Polish & Hardening ⬜
+
+| Task | Status | Notes |
+|------|--------|-------|
+| SSO / SAML / OIDC auth | ⬜ | |
+| RBAC org-level permissions hardening | ⬜ | |
+| Compliance reports (SOC2, ISO27001, PCI-DSS) | ⬜ | |
+| Multi-tenant billing | ⬜ | |
+| Production Docker Compose stack | ⬜ | Nginx, TLS, secrets management |
+| On-premise deployment guide | ⬜ | |

@@ -1,8 +1,8 @@
 # Phase 7 Audit Report — Enterprise Features
 
-**Date:** 2026-07-26  
-**Git HEAD:** cee2ca1  
-**Status:** COMPLETE ✅ (P7-1 ✅ P7-2 ✅ P7-3 ✅)
+**Date:** 2026-08-03  
+**Git HEAD:** a938554  
+**Status:** COMPLETE ✅ + END-TO-END VERIFIED (P7-1 ✅ P7-2 ✅ P7-3 ✅)
 
 ---
 
@@ -137,14 +137,49 @@ ES_INDEX=sentinelai-findings
 
 ---
 
+## End-to-End Verification (2026-08-03)
+
+All 4 scan types verified in a single demo run:
+
+| Scan Type | Tool | Findings | Chains | Status |
+|-----------|------|----------|--------|--------|
+| Network | Nmap + Nuclei | 2 | 1 | ✅ |
+| Container | Trivy (python:3.8-slim) | 50 | 5 | ✅ |
+| Cloud | Prowler (real AWS account) | 21 | 2 | ✅ |
+| Active Directory | BloodHound CE (TESTCORP.LOCAL) | 1 critical | 0 | ✅ |
+
+---
+
+## Bug Fixes (session 22 — landed during demo)
+
+### Fix 1: Neo4j AsyncDriver event-loop binding
+**Symptom:** `"Future is attached to a different loop"` warning; Neo4j queries silently fail on 2nd+ Celery task.  
+**Root cause:** `neo4j_client.py` module-level `_driver` singleton binds to the first task's asyncio event loop. Celery prefork creates a new loop per task; old driver is unusable.  
+**Fix:** Added `_close_neo4j()` async helper in `agent_worker.py`, called in `run_agent_task` finally block before `loop.close()`.  
+**Commit:** 16e0804
+
+### Fix 2: AWS credentials not loaded in Celery worker
+**Symptom:** Prowler exits with `"AWS credentials not set"` even though `.env` has `AWS_ACCESS_KEY_ID`.  
+**Root cause:** `prowler_scanner.py` reads `os.environ` directly. `pydantic-settings env_file` loads vars into `settings` object but does NOT inject into `os.environ`. Celery worker process never sources `.env`.  
+**Fix:** Added `load_dotenv(Path(__file__).parent.parent.parent / ".env")` at top of `agent_worker.py` (before any other imports).  
+**Commit:** 19a0f1a
+
+### Fix 3: BloodHound CE nodes/edges returned as dicts, not lists
+**Symptom:** `"BloodHound agent failed: 0"` — scan completes with 0 findings despite 2x HTTP 200 from BH CE.  
+**Root cause:** BH CE `/api/v2/graphs/cypher` returns `nodes` and `edges` as dicts keyed by string node IDs (`{"0": {...}, "1": {...}}`). `_path_to_finding()` in `bloodhound_agent.py` did `nodes[0]` — `KeyError: 0` on a dict. `str(KeyError(0))` is literally `"0"`, explaining the opaque error message.  
+**Fix:** Added `_to_list()` helper in `bloodhound_client.py` that converts dict values to list; applied in `_cypher()`, `get_attack_paths()`, `get_node_shortest_paths()`.  
+**Commit:** a938554
+
+---
+
 ## Known Gaps / Deferred
 
 | Item | Reason deferred |
 |------|-----------------|
-| Real AD environment test | No Windows AD in dev; synthetic data used |
-| BH CE Cypher edge traversal | `_cypher_raw` returns nodes+edges but BH graph format may vary by version |
+| Real AD environment test | No Windows AD in dev; synthetic TESTCORP.LOCAL used |
 | Beat HA / Redis lock | Multiple Beat instances would double-trigger; single Beat process assumed |
-| Schedule last-run history | No per-run history stored; only `last_run_at` timestamp kept |
+| Schedule per-run history | Only `last_run_at` stored; no per-run audit log |
+| Fine-tuned security LLMs | Phase 8 |
 
 ---
 

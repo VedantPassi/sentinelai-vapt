@@ -1,8 +1,9 @@
 # SentinelAI — Master Progress Report
 
-**Date:** 2026-07-26
-**Phases Complete:** 0 → 6, P7-1 ✅ P7-2 ✅ (P7-3 pending)
-**Status:** Active development — Phase 7 in progress
+**Date:** 2026-08-03
+**Phases Complete:** 0 → 7 (ALL COMPLETE ✅)
+**Status:** Phase 7 verified end-to-end — all 4 scan types working — Phase 8 next
+**Git HEAD:** a938554
 
 ---
 
@@ -257,33 +258,55 @@ P5-1 chain_agent, P5-2 Redis WS streaming, P5-3 SARIF export, P5-4 PDF improveme
 ## Phase 6 — Advanced Modules ✅
 P6-1 Cytoscape chain graph, P6-2 Trivy container scanning, P6-3 Prowler cloud (AWS), P6-4 Neo4j attack graph, P6-5 chain agent v2 cross-surface kill chains. See phase-6-audit.md.
 
-## Phase 7 — Enterprise Features 🔵 IN PROGRESS
+## Phase 7 — Enterprise Features ✅ COMPLETE
 
 ### P7-1 BloodHound CE — Active Directory Attack Paths ✅
 - BloodHound CE deployed (Docker, localhost:8080)
 - Synthetic AD: TESTCORP.LOCAL, charlie→bob→alice→Domain Admins via WriteDACL+GenericAll
-- `bloodhound_client.py` uses `/api/v2/graphs/cypher` (Cypher queries, not dead REST)
+- `bloodhound_client.py` uses `/api/v2/graphs/cypher` (Cypher queries, not dead REST endpoints)
 - `bloodhound_agent.py` — paths → FindingData(category=ad, severity=critical) + LLM enrichment
-- Pipeline route: `target_type="ad"` → bloodhound node
-- Frontend: "Active Directory (BloodHound)" scan type
+- Pipeline route: `target_type="ad"` → bloodhound node; recon/planner skip for `ad`
+- Frontend: "Active Directory (BloodHound)" scan type option
 
 ### P7-2 Continuous Monitoring — Celery Beat ✅
 - `ScheduledScan` model: target, scan_type, interval_hours, next_run_at, is_active
 - `workers/beat_worker.py`: 60s tick → `check_due_schedules` → creates ScanJob → enqueues run_agent_task
 - Full CRUD API: `POST/GET/PATCH/DELETE /schedules`
 - Frontend `/schedules` page: create form, pause/resume/delete table
-- Beat start: `celery -A workers.beat_worker beat --loglevel=info`
 
-### P7-3 SIEM Integration — PENDING
-Forward findings to Splunk HEC / Elasticsearch after each scan completes.
+### P7-3 SIEM Integration ✅
+- `siem_client.py` — async httpx: Splunk HEC + Elasticsearch bulk API, fire-and-forget
+- `siem_worker.py` — Celery task `ship_to_siem(scan_id)`: loads findings from DB, builds events, calls `forward_to_siem`
+- Triggered post-scan in `agent_worker.py` if `SIEM_ENABLED=true`
+- Enable: `SIEM_ENABLED=true`, `SPLUNK_HEC_URL`, `SPLUNK_HEC_TOKEN`, `ES_URL` in `.env`
 
-## What's Left
+### End-to-End Demo ✅ (verified 2026-08-03)
+| Scan Type | Tool | Findings | Chains |
+|-----------|------|----------|--------|
+| Network | Nmap + Nuclei | 2 | 1 |
+| Container | Trivy (python:3.8-slim) | 50 | 5 |
+| Cloud | Prowler (real AWS) | 21 | 2 |
+| Active Directory | BloodHound CE (TESTCORP.LOCAL) | 1 critical | 0 |
 
-| Item | Phase |
-|------|-------|
-| P7-3 SIEM integration (Splunk HEC + Elasticsearch) | 7 |
-| Fine-tuned security LLMs | 7 |
-| On-premise deployment guide | 7 |
+### Bug Fixes (session 22)
+| Bug | Fix | Commit |
+|-----|-----|--------|
+| Neo4j `AsyncDriver` binds to first task's event loop; subsequent tasks fail | `_close_neo4j()` in `run_agent_task` finally block | 16e0804 |
+| Prowler reads `os.environ` directly; Celery worker never sources `.env` | `load_dotenv(Path(...) / ".env")` at top of `agent_worker.py` | 19a0f1a |
+| BH CE `/api/v2/graphs/cypher` returns nodes/edges as string-keyed dicts; `nodes[0]` → `KeyError: 0` | `_to_list()` helper normalizes dict→list in `bloodhound_client.py` | a938554 |
+
+---
+
+## Phase 8 — Polish & Hardening ⬜ (next)
+
+| Item | Description |
+|------|-------------|
+| SSO / SAML / OIDC | Enterprise auth federation |
+| RBAC hardening | Org-level permission scopes |
+| Compliance reports | SOC2, ISO27001, PCI-DSS report templates |
+| Multi-tenant billing | Usage metering per org |
+| Production deployment | Nginx + TLS + secrets management Docker stack |
+| On-premise guide | Full self-hosted deployment docs |
 
 ---
 
@@ -291,8 +314,8 @@ Forward findings to Splunk HEC / Elasticsearch after each scan completes.
 
 | Item | Deferred To |
 |------|-------------|
-| WebSocket auth | Phase 5 |
-| Real-time incremental WS streaming (currently batch at completion) | Phase 5 |
-| `chain_agent.py` — attack chain discovery | Phase 5 |
-| ANTHROPIC_API_KEY in .env (using Ollama now) | When switching to prod |
-| PATCH `/findings/{id}` live curl test | Phase 5 test suite |
+| Real Windows AD environment test | Phase 8 or customer env |
+| BH CE Cypher edge traversal edge cases | Covered by `_to_list()` fix |
+| Beat HA / Redis lock (multiple Beat instances) | Phase 8 |
+| Schedule per-run history | Phase 8 |
+| Fine-tuned security LLMs | Phase 8 |
