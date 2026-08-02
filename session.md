@@ -61,9 +61,10 @@ Vedant is the **CTO / PM** — he reviews and approves everything.
 | 4 | Validation & Risk Scoring | ✅ Complete |
 | 5 | Reporting & Integrations | ✅ Complete |
 | 6 | Advanced Modules (Cloud/K8s) | ✅ Complete |
-| 7 | Enterprise Features | 🔵 In Progress (P7-1 ✅ P7-2 ✅ P7-3 ⬜) |
+| 7 | Enterprise Features | ✅ Complete (P7-1 ✅ P7-2 ✅ P7-3 ✅) |
+| 8 | Polish & Hardening | ⬜ Not started |
 
-**Current Phase: 7 — IN PROGRESS**
+**Current Phase: 7 — COMPLETE ✅ / Phase 8 next**
 
 ---
 
@@ -331,13 +332,42 @@ ES_USER=elastic
 ES_PASSWORD=<password>
 ```
 
-**Next session should (resume here):**
-Phase 7 complete. Options:
-1. End-to-end demo run (all scan types)
-2. Phase 8 — polish/hardening (SSO, compliance reports, multi-tenant billing)
-3. On-premise deployment guide
+**What was done (session 22 - end-to-end demo + bug fixes):**
+- Ran full end-to-end demo across all 4 scan types:
+  - Network (nmap/nuclei) → 2 findings, 1 chain ✅
+  - Container (Trivy, python:3.8-slim) → 50 findings, 5 chains ✅
+  - Cloud (Prowler/AWS) → 21 findings, 2 chains ✅ (after 2 bug fixes)
+  - Active Directory (BloodHound CE) → 1 critical finding (DOMAIN ADMINS path) ✅ (after 1 bug fix)
 
-**Git HEAD:** cee2ca1
+- **Bug fix 1: Neo4j driver event-loop binding (agent_worker.py)**
+  - `neo4j_client.py` module-level `_driver` singleton binds to first task's loop
+  - Subsequent Celery tasks create new loops → "Future attached to a different loop" warning + driver unusable
+  - Fix: added `_close_neo4j()` async helper, called in `run_agent_task` finally block
+  - Committed: 16e0804
+
+- **Bug fix 2: AWS credentials not loaded in Celery worker (agent_worker.py)**
+  - `prowler_scanner.py` reads `os.environ.get('AWS_ACCESS_KEY_ID')` directly
+  - `pydantic-settings env_file` does NOT inject into `os.environ`; Celery worker never sourced `.env`
+  - Fix: `load_dotenv(Path(__file__).parent.parent.parent / ".env")` at top of `agent_worker.py`
+  - Committed: 19a0f1a
+
+- **Bug fix 3: BloodHound CE nodes/edges returned as dicts not lists (bloodhound_client.py)**
+  - BH CE `/api/v2/graphs/cypher` returns `nodes`/`edges` as dicts keyed by string IDs (`{"0": {...}, "1": {...}}`)
+  - `_path_to_finding` in `bloodhound_agent.py` did `nodes[0]` → `KeyError: 0` (dict, not list)
+  - Error surfaced as `"BloodHound agent failed: 0"` (str(KeyError(0)) == '0')
+  - Fix: added `_to_list()` helper in `bloodhound_client.py`; applied in `_cypher()`, `get_attack_paths()`, `get_node_shortest_paths()`
+  - Committed: a938554
+
+- Identified stale Celery worker issue (PID 6381/6389 from Jul 18, running alongside fresh worker) — killed stale pair
+- All 3 fixes pushed: a938554 (git HEAD)
+
+**Next session should:**
+Phase 7 fully verified. Choose next:
+1. Phase 8 — polish/hardening (SSO, compliance reports, multi-tenant billing)
+2. On-premise deployment guide (Docker Compose production stack)
+3. Phase 8 specific: RBAC / org-level permissions hardening
+
+**Git HEAD:** a938554
 
 **Restart Celery worker command:**
 ```bash
