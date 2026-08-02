@@ -61,11 +61,18 @@ async def post(path: str, body: dict[str, Any]) -> dict[str, Any]:
         return resp.json()
 
 
+def _to_list(v: Any) -> list[dict[str, Any]]:
+    """BH CE returns nodes/edges as dicts keyed by string IDs — normalize to list."""
+    if isinstance(v, dict):
+        return list(v.values())
+    return v or []
+
+
 async def _cypher(query: str) -> list[dict[str, Any]]:
     """Run a Cypher query via BloodHound CE graph endpoint."""
     try:
         data = await post("/api/v2/graphs/cypher", {"query": query})
-        return data.get("data", {}).get("nodes", []) or []
+        return _to_list(data.get("data", {}).get("nodes"))
     except Exception as exc:
         logger.warning("BloodHound cypher failed: %s", exc)
         return []
@@ -90,8 +97,8 @@ async def get_attack_paths(limit: int = 10) -> list[dict[str, Any]]:
     """
     try:
         raw = await _cypher_raw(query)
-        edges = raw.get("edges", []) or []
-        nodes = raw.get("nodes", []) or []
+        edges = _to_list(raw.get("edges"))
+        nodes = _to_list(raw.get("nodes"))
         paths: list[dict[str, Any]] = []
         if nodes:
             paths.append({"nodes": nodes, "edges": edges})
@@ -135,7 +142,7 @@ async def get_node_shortest_paths(node_id: str, node_type: str = "User") -> list
     """
     try:
         raw = await _cypher_raw(query)
-        return [{"nodes": raw.get("nodes", []), "edges": raw.get("edges", [])}]
+        return [{"nodes": _to_list(raw.get("nodes")), "edges": _to_list(raw.get("edges"))}]
     except Exception as exc:
         logger.warning("BloodHound node paths failed: %s", exc)
         return []
