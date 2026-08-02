@@ -3,7 +3,12 @@ from __future__ import annotations
 import asyncio
 import uuid
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import AsyncGenerator
+
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).parent.parent.parent / ".env")
 
 from celery import Celery
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
