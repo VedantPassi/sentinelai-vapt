@@ -38,8 +38,17 @@ def run_agent_task(self, scan_id: str, target_url: str, target_type: str, config
     try:
         return loop.run_until_complete(_run(scan_id, target_url, target_type, config))
     finally:
+        loop.run_until_complete(_close_neo4j())
         loop.close()
         asyncio.set_event_loop(None)
+
+
+async def _close_neo4j() -> None:
+    try:
+        from core.neo4j_client import close_driver
+        await close_driver()
+    except Exception:
+        pass
 
 
 async def _run(scan_id: str, target_url: str, target_type: str, config: dict) -> dict:
