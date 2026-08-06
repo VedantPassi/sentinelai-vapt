@@ -383,13 +383,27 @@ ES_PASSWORD=<password>
 
 **P8-1 RBAC — COMPLETE ✅**
 
-**Next session should:**
-Continue Phase 8. Options:
-1. P8-2 Compliance reports (SOC2/ISO27001/PCI-DSS mapped PDF)
-2. P8-3 Production Docker stack (Nginx + TLS + secrets)
-3. P8-4 SSO/OIDC
+**What was done (session 23 continued - P8-2 Compliance Reports, IN PROGRESS):**
+- `backend/core/compliance.py` (new) — control mapping tables for SOC2/ISO27001/PCI-DSS:
+  - SOC2: CC6.1, CC6.2, CC6.6, CC6.7, CC7.1, CC7.2, CC8.1, CC9.2
+  - ISO27001: A.5.23, A.8.8, A.9.1, A.9.4, A.10.1, A.12.1, A.14.2, A.16.1
+  - PCI-DSS: Req 1–4, 6–8, 10–11
+  - `evaluate_framework(framework, findings)` → list[ControlResult] with NON-COMPLIANT/REVIEW/COMPLIANT
+  - Matching via category + severity + title/description keywords
+- `backend/api/v1/compliance.py` (new) — `GET /agent-scans/{scan_id}/compliance/{framework}`:
+  - Accepts Bearer header OR `?token=` query param (for browser `<a>` download)
+  - `_resolve_user` dependency handles both auth paths
+  - PDF: header, summary, controls overview table, per-control detail (issues only), compliant list
+  - fpdf2, same pattern as reports.py
+- `backend/main.py` — compliance_router registered
+- **PENDING**: frontend compliance export buttons on agent-scans page
 
-**Git HEAD:** aeade70
+**Next session should:**
+1. Add compliance export buttons to frontend agent-scans page (3 `<a>` tags: SOC2, ISO27001, PCI-DSS) targeting the `?token=` endpoint
+2. Run `npx tsc --noEmit` to verify
+3. Push P8-2
+
+**Git HEAD:** auto-sync will commit — check with `git log --oneline -3`
 
 **Restart Celery worker command:**
 ```bash
