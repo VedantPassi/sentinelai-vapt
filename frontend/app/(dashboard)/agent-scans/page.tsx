@@ -19,6 +19,7 @@ import {
 } from "@/lib/api";
 import ChainGraph from "@/components/ChainGraph";
 import AttackGraphView from "@/components/AttackGraphView";
+import { useUser } from "@/contexts/UserContext";
 
 const SEVERITY_COLOR: Record<string, string> = {
   critical: "text-red-600 bg-red-50",

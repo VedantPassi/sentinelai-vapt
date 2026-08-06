@@ -306,6 +306,44 @@ export async function deleteSchedule(id: string): Promise<void> {
   return request<void>(`/schedules/${id}`, { method: "DELETE" });
 }
 
+// Users
+export type UserRole = "admin" | "analyst" | "viewer";
+
+export interface CurrentUser {
+  id: string;
+  email: string;
+  role: UserRole;
+  org_id: string;
+}
+
+export type OrgUser = CurrentUser;
+
+export async function getCurrentUser(): Promise<CurrentUser> {
+  return request<CurrentUser>("/auth/me");
+}
+
+export async function listUsers(): Promise<OrgUser[]> {
+  return request<OrgUser[]>("/users");
+}
+
+export async function inviteUser(email: string, password: string, role: UserRole): Promise<OrgUser> {
+  return request<OrgUser>("/users", {
+    method: "POST",
+    body: JSON.stringify({ email, password, role }),
+  });
+}
+
+export async function updateUserRole(userId: string, role: UserRole): Promise<OrgUser> {
+  return request<OrgUser>(`/users/${userId}/role`, {
+    method: "PATCH",
+    body: JSON.stringify({ role }),
+  });
+}
+
+export async function removeUser(userId: string): Promise<void> {
+  return request<void>(`/users/${userId}`, { method: "DELETE" });
+}
+
 export function connectAgentScanWS(
   scanId: string,
   onEvent: (event: ProgressEvent | { node: string; status: string; message: string; error?: string }) => void
