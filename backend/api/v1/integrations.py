@@ -144,7 +144,7 @@ async def post_to_slack(
 async def create_jira_issue(
     scan_id: uuid.UUID,
     payload: JiraPayload,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_analyst),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     scan = await _get_scan_or_404(scan_id, current_user.org_id, db)
