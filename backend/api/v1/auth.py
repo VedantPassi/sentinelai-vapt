@@ -6,10 +6,20 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.db import get_db
+from core.deps import get_current_user
 from core.security import create_access_token, hash_password, verify_password
 from models.models import Organization, User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+class UserResponse(BaseModel):
+    id: uuid.UUID
+    email: str
+    role: str
+    org_id: uuid.UUID
+
+    model_config = {"from_attributes": True}
 
 
 class RegisterRequest(BaseModel):
