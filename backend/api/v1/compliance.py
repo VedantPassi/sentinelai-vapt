@@ -13,7 +13,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.compliance import FRAMEWORK_NAMES, ControlResult, evaluate_framework
 from core.db import get_db
-from core.deps import get_current_user
 from core.security import decode_access_token
 from models.models import Finding, ScanJob, Target, User
 
