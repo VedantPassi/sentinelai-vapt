@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.db import get_db
-from core.deps import get_current_user
+from core.deps import get_current_user, require_analyst
 from core.llm import LLMError, llm_complete
 from models.models import Finding, ScanJob, Target, User
 from scoring.classifier import classify_finding
