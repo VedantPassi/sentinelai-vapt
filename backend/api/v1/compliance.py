@@ -64,7 +64,7 @@ def _s(text: str) -> str:
 async def download_compliance_report(
     scan_id: uuid.UUID,
     framework: str,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(_resolve_user),
     db: AsyncSession = Depends(get_db),
 ) -> StreamingResponse:
     if framework not in FRAMEWORK_NAMES:
