@@ -111,7 +111,7 @@ async def update_target(
 @router.delete("/{target_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_target(
     target_id: uuid.UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> None:
     target = await _get_target_or_404(target_id, current_user.org_id, db)
