@@ -338,6 +338,22 @@ export default function AgentScansPage() {
           </div>
           <p className="text-xs text-gray-400 font-mono">{activeScan.id}</p>
 
+          {activeScan.status === "completed" && (
+            <div className="flex gap-2 flex-wrap items-center">
+              <span className="text-xs text-gray-400">Compliance:</span>
+              {(["soc2", "iso27001", "pci-dss"] as const).map((fw) => (
+                <a
+                  key={fw}
+                  href={`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1"}/agent-scans/${activeScan.id}/compliance/${fw}?token=${localStorage.getItem("access_token")}`}
+                  download
+                  className="text-xs rounded border px-2 py-1 hover:bg-gray-50 transition-colors uppercase font-mono"
+                >
+                  {fw}
+                </a>
+              ))}
+            </div>
+          )}
+
           <div className="bg-gray-950 rounded p-3 h-48 overflow-y-auto font-mono text-xs space-y-1">
             {events.length === 0 && (
               <p className="text-gray-500">Waiting for events…</p>
