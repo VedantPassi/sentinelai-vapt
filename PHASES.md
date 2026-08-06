@@ -151,7 +151,7 @@
 | Task | Status | Notes |
 |------|--------|-------|
 | RBAC org-level permissions (P8-1) | ✅ | require_roles() + admin/analyst/viewer enforced; users API; UserContext frontend |
-| Compliance reports — SOC2/ISO27001/PCI-DSS (P8-2) | ⬜ | |
+| Compliance reports — SOC2/ISO27001/PCI-DSS (P8-2) | ✅ | core/compliance.py mapping + /compliance/{framework} PDF endpoint + frontend export buttons |
 | Production Docker Compose stack (P8-3) | ⬜ | Nginx, TLS, secrets management |
 | SSO / SAML / OIDC auth (P8-4) | ⬜ | |
 | Multi-tenant billing | ⬜ | |

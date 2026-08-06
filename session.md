@@ -398,12 +398,16 @@ ES_PASSWORD=<password>
 - `backend/main.py` — compliance_router registered
 - **PENDING**: frontend compliance export buttons on agent-scans page
 
-**Next session should:**
-1. Add compliance export buttons to frontend agent-scans page (3 `<a>` tags: SOC2, ISO27001, PCI-DSS) targeting the `?token=` endpoint
-2. Run `npx tsc --noEmit` to verify
-3. Push P8-2
+**P8-2 Compliance Reports — COMPLETE ✅ (1d7e5d2)**
+- Frontend: compliance export buttons (SOC2/ISO27001/PCI-DSS) on completed scan, `?token=` query param for browser `<a>` download
+- tsc clean, pushed 1d7e5d2
 
-**Git HEAD:** auto-sync will commit — check with `git log --oneline -3`
+**Next session should:**
+Continue Phase 8:
+1. P8-3 Production Docker stack (Nginx + TLS + secrets management)
+2. P8-4 SSO/OIDC
+
+**Git HEAD:** 1d7e5d2
 
 **Restart Celery worker command:**
 ```bash
