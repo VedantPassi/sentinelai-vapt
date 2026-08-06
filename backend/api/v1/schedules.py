@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.db import get_db
-from core.deps import get_current_user
+from core.deps import get_current_user, require_admin, require_analyst
 from models.models import ScheduledScan, Target, User
 
 router = APIRouter(prefix="/schedules", tags=["schedules"])
@@ -81,7 +81,7 @@ async def _get_schedule_or_404(
 async def create_schedule(
     payload: ScheduleCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_analyst),
 ) -> ScheduleResponse:
     target_id = uuid.UUID(payload.target_id)
     await _get_target_or_403(target_id, current_user.org_id, db)
