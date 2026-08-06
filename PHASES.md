@@ -146,13 +146,13 @@
 
 ---
 
-## Phase 8 — Polish & Hardening ⬜
+## Phase 8 — Polish & Hardening 🔵
 
 | Task | Status | Notes |
 |------|--------|-------|
-| SSO / SAML / OIDC auth | ⬜ | |
-| RBAC org-level permissions hardening | ⬜ | |
-| Compliance reports (SOC2, ISO27001, PCI-DSS) | ⬜ | |
+| RBAC org-level permissions (P8-1) | ✅ | require_roles() + admin/analyst/viewer enforced; users API; UserContext frontend |
+| Compliance reports — SOC2/ISO27001/PCI-DSS (P8-2) | ⬜ | |
+| Production Docker Compose stack (P8-3) | ⬜ | Nginx, TLS, secrets management |
+| SSO / SAML / OIDC auth (P8-4) | ⬜ | |
 | Multi-tenant billing | ⬜ | |
-| Production Docker Compose stack | ⬜ | Nginx, TLS, secrets management |
 | On-premise deployment guide | ⬜ | |

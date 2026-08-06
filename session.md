@@ -361,13 +361,35 @@ ES_PASSWORD=<password>
 - Identified stale Celery worker issue (PID 6381/6389 from Jul 18, running alongside fresh worker) — killed stale pair
 - All 3 fixes pushed: a938554 (git HEAD)
 
-**Next session should:**
-Phase 7 fully verified. Choose next:
-1. Phase 8 — polish/hardening (SSO, compliance reports, multi-tenant billing)
-2. On-premise deployment guide (Docker Compose production stack)
-3. Phase 8 specific: RBAC / org-level permissions hardening
+**What was done (session 23 - P8-1 RBAC enforcement):**
+- `backend/core/deps.py` — added `require_roles(*roles)` factory + `require_admin` / `require_analyst` shorthands
+- Route guards wired (single `Depends` swap, no DB changes):
+  - `targets.py`: POST/PUT → analyst+; DELETE → admin
+  - `agent_scans.py`: POST → analyst+
+  - `findings.py`: PATCH, POST /validate → analyst+
+  - `integrations.py`: both POSTs → analyst+
+  - `schedules.py`: POST/PATCH → analyst+; DELETE → admin
+  - GET endpoints unchanged (viewers can read)
+- `backend/api/v1/users.py` (new) — admin-only: GET /users, POST /users (invite), PATCH /users/{id}/role, DELETE /users/{id}; self-remove + self-role-change blocked
+- `backend/api/v1/auth.py` — added GET /auth/me → {id, email, role, org_id}
+- `backend/main.py` — users_router registered
+- `frontend/contexts/UserContext.tsx` (new) — React context, UserProvider + useUser() hook; fetches /auth/me on mount
+- `frontend/app/(dashboard)/layout.tsx` — wraps tree in UserProvider; Nav shows Users link for admin; email+role in header
+- `frontend/lib/api.ts` — UserRole type, CurrentUser/OrgUser interfaces, getCurrentUser/listUsers/inviteUser/updateUserRole/removeUser
+- `frontend/app/(dashboard)/agent-scans/page.tsx` — Launch button hidden for viewer
+- `frontend/app/(dashboard)/schedules/page.tsx` — create form + pause/delete hidden for viewer
+- `frontend/app/(dashboard)/users/page.tsx` (new) — admin-only: member table, role dropdown, remove button, invite form
+- tsc clean, pushed aeade70
 
-**Git HEAD:** a938554
+**P8-1 RBAC — COMPLETE ✅**
+
+**Next session should:**
+Continue Phase 8. Options:
+1. P8-2 Compliance reports (SOC2/ISO27001/PCI-DSS mapped PDF)
+2. P8-3 Production Docker stack (Nginx + TLS + secrets)
+3. P8-4 SSO/OIDC
+
+**Git HEAD:** aeade70
 
 **Restart Celery worker command:**
 ```bash
