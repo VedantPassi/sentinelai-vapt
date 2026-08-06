@@ -66,7 +66,7 @@ async def list_targets(
 @router.post("", response_model=TargetResponse, status_code=status.HTTP_201_CREATED)
 async def create_target(
     body: TargetCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_analyst),
     db: AsyncSession = Depends(get_db),
 ) -> Target:
     target = Target(
@@ -97,7 +97,7 @@ async def get_target(
 async def update_target(
     target_id: uuid.UUID,
     body: TargetUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_analyst),
     db: AsyncSession = Depends(get_db),
 ) -> Target:
     target = await _get_target_or_404(target_id, current_user.org_id, db)
