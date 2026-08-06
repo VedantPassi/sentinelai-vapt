@@ -53,7 +53,7 @@ async def _get_scan_or_404(scan_id: uuid.UUID, org_id: uuid.UUID, db: AsyncSessi
 async def create_agent_scan(
     payload: AgentScanCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_analyst),
 ) -> AgentScanResponse:
     # Verify target belongs to this org
     target_result = await db.execute(
