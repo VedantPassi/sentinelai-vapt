@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import settings
 from core.db import get_db
-from core.deps import get_current_user
+from core.deps import get_current_user, require_analyst
 from models.models import AttackChain, Finding, ScanJob, Target, User
 
 router = APIRouter(prefix="/agent-scans", tags=["integrations"])
