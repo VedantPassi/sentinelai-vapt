@@ -13,6 +13,7 @@ from api.v1.reports import router as reports_router
 from api.v1.scans import router as scans_router
 from api.v1.sarif import router as sarif_router
 from api.v1.targets import router as targets_router
+from api.v1.users import router as users_router
 
 app = FastAPI(title="SentinelAI", version="0.1.0")
 
