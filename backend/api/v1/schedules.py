@@ -149,7 +149,7 @@ async def update_schedule(
 async def delete_schedule(
     schedule_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin),
 ) -> None:
     sched = await _get_schedule_or_404(schedule_id, current_user.org_id, db)
     await db.delete(sched)
