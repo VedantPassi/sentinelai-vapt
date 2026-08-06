@@ -161,6 +161,7 @@ function FindingCard({
 }
 
 export default function AgentScansPage() {
+  const { user } = useUser();
   const [targets, setTargets] = useState<Target[]>([]);
   const [selectedTarget, setSelectedTarget] = useState("");
   const [scanType, setScanType] = useState<"web" | "api" | "network" | "container" | "cloud" | "ad">("web");
