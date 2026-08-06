@@ -11,6 +11,7 @@ import {
   Target,
   toggleSchedule,
 } from "@/lib/api";
+import { useUser } from "@/contexts/UserContext";
 
 const SCAN_TYPES = ["web", "api", "network", "container", "cloud", "ad"];
 
