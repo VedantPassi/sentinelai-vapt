@@ -316,13 +316,15 @@ export default function AgentScansPage() {
 
         {error && <p className="text-red-600 text-sm">{error}</p>}
 
-        <button
-          onClick={startScan}
-          disabled={loading || !selectedTarget}
-          className="bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
-        >
-          {loading ? "Starting…" : "Launch Agent Scan"}
-        </button>
+        {user?.role !== "viewer" && (
+          <button
+            onClick={startScan}
+            disabled={loading || !selectedTarget}
+            className="bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+          >
+            {loading ? "Starting…" : "Launch Agent Scan"}
+          </button>
+        )}
       </div>
 
       {/* Active scan status */}
