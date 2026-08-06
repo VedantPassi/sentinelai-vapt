@@ -1,9 +1,9 @@
 # SentinelAI — Master Progress Report
 
-**Date:** 2026-08-03
-**Phases Complete:** 0 → 7 (ALL COMPLETE ✅)
-**Status:** Phase 7 verified end-to-end — all 4 scan types working — Phase 8 next
-**Git HEAD:** a938554
+**Date:** 2026-08-07
+**Phases Complete:** 0 → 7 ✅, P8-1 ✅, P8-2 ✅
+**Status:** Phase 8 in progress — RBAC + compliance reports shipped
+**Git HEAD:** 1d7e5d2
 
 ---
 
@@ -297,16 +297,33 @@ P6-1 Cytoscape chain graph, P6-2 Trivy container scanning, P6-3 Prowler cloud (A
 
 ---
 
-## Phase 8 — Polish & Hardening ⬜ (next)
+## Phase 8 — Polish & Hardening 🔵 IN PROGRESS
 
-| Item | Description |
-|------|-------------|
-| SSO / SAML / OIDC | Enterprise auth federation |
-| RBAC hardening | Org-level permission scopes |
-| Compliance reports | SOC2, ISO27001, PCI-DSS report templates |
-| Multi-tenant billing | Usage metering per org |
-| Production deployment | Nginx + TLS + secrets management Docker stack |
-| On-premise guide | Full self-hosted deployment docs |
+### P8-1 RBAC Enforcement ✅ (aeade70)
+- `core/deps.py` — `require_roles(*roles)` factory; `require_admin` / `require_analyst` shorthands
+- Route guards: targets (POST/PUT=analyst, DELETE=admin), agent_scans (POST=analyst), findings (PATCH/validate=analyst), integrations (POST=analyst), schedules (POST/PATCH=analyst, DELETE=admin)
+- `api/v1/users.py` — admin-only: GET/POST/PATCH role/DELETE org members; self-remove + self-role-change blocked
+- `api/v1/auth.py` — `GET /auth/me` → `{id, email, role, org_id}`
+- Frontend: `UserContext` + `useUser()` hook; layout shows email+role+Users nav (admin only); Launch/create/delete hidden for viewer
+
+### P8-2 Compliance Reports ✅ (1d7e5d2)
+- `core/compliance.py` — control mapping for 3 frameworks:
+  - SOC2 TSC: CC6.1, CC6.2, CC6.6, CC6.7, CC7.1, CC7.2, CC8.1, CC9.2
+  - ISO27001 Annex A: A.5.23, A.8.8, A.9.1, A.9.4, A.10.1, A.12.1, A.14.2, A.16.1
+  - PCI-DSS v4: Req 1–4, 6–8, 10–11
+  - Matching: category + severity + title/description keywords → `evaluate_framework()` → `ControlResult(status=NON-COMPLIANT|REVIEW|COMPLIANT)`
+- `api/v1/compliance.py` — `GET /agent-scans/{id}/compliance/{framework}` → PDF download
+  - `?token=` query param fallback (same as WS auth) for browser `<a>` download
+  - PDF: header, summary, controls table, per-control detail with findings + remediation, compliant list
+- Frontend: 3 compliance export buttons (SOC2 / ISO27001 / PCI-DSS) on completed scan card
+
+### P8 Remaining
+| Item | Status |
+|------|--------|
+| Production Docker stack (Nginx + TLS) | ⬜ P8-3 |
+| SSO / OIDC | ⬜ P8-4 |
+| Multi-tenant billing | ⬜ |
+| On-premise guide | ⬜ |
 
 ---
 
