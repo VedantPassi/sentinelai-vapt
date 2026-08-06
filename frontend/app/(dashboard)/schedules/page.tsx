@@ -107,7 +107,7 @@ export default function SchedulesPage() {
       )}
 
       {/* Create form */}
-      <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+      {user?.role !== "viewer" && <div className="rounded-lg border border-border bg-card p-5 space-y-4">
         <h2 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">New Schedule</h2>
         <div className="flex flex-wrap gap-3 items-end">
           <div className="flex flex-col gap-1">
@@ -154,7 +154,7 @@ export default function SchedulesPage() {
             {creating ? "Creating…" : "Create"}
           </button>
         </div>
-      </div>
+      </div>}
 
       {/* Schedule list */}
       {loading ? (
@@ -201,18 +201,22 @@ export default function SchedulesPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 flex gap-2">
-                      <button
-                        onClick={() => handleToggle(s)}
-                        className="text-xs rounded-md border border-border px-2 py-1 hover:bg-muted transition-colors"
-                      >
-                        {s.is_active ? "Pause" : "Resume"}
-                      </button>
-                      <button
-                        onClick={() => handleDelete(s.id)}
-                        className="text-xs rounded-md border border-destructive/40 px-2 py-1 text-destructive hover:bg-destructive/10 transition-colors"
-                      >
-                        Delete
-                      </button>
+                      {user?.role !== "viewer" && (
+                        <>
+                          <button
+                            onClick={() => handleToggle(s)}
+                            className="text-xs rounded-md border border-border px-2 py-1 hover:bg-muted transition-colors"
+                          >
+                            {s.is_active ? "Pause" : "Resume"}
+                          </button>
+                          <button
+                            onClick={() => handleDelete(s.id)}
+                            className="text-xs rounded-md border border-destructive/40 px-2 py-1 text-destructive hover:bg-destructive/10 transition-colors"
+                          >
+                            Delete
+                          </button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 );
