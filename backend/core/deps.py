@@ -1,5 +1,6 @@
 import uuid
 from collections.abc import AsyncGenerator
+from typing import Callable
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -33,3 +34,18 @@ async def get_current_user(
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
     return user
+
+
+def require_roles(*roles: str) -> Callable:
+    async def _check(user: User = Depends(get_current_user)) -> User:
+        if user.role not in roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Role '{user.role}' cannot perform this action",
+            )
+        return user
+    return _check
+
+
+require_admin = require_roles("admin")
+require_analyst = require_roles("admin", "analyst")
