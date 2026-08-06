@@ -28,6 +28,7 @@ function fmtInterval(hours: number): string {
 }
 
 export default function SchedulesPage() {
+  const { user } = useUser();
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [targets, setTargets] = useState<Target[]>([]);
   const [loading, setLoading] = useState(true);
