@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.deps import get_current_user
+from core.deps import get_current_user, require_analyst
 from core.db import get_db
 from core.redis_client import get_redis
 from core.security import decode_access_token
