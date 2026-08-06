@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.db import get_db
-from core.deps import get_current_user
+from core.deps import get_current_user, require_admin, require_analyst
 from models.models import Target, User
 
 router = APIRouter(prefix="/targets", tags=["targets"])
