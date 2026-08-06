@@ -70,7 +70,7 @@ async def get_finding(
 async def update_finding(
     finding_id: uuid.UUID,
     body: FindingUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_analyst),
     db: AsyncSession = Depends(get_db),
 ) -> FindingDetailResponse:
     finding = await _get_finding_or_404(finding_id, current_user.org_id, db)
