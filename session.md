@@ -461,7 +461,49 @@ Continue Phase 8:
 - Phase 9 options: on-premise deployment guide, multi-tenant billing, fine-tuned security LLMs, or customer demo prep
 - Decide next phase direction with CTO
 
-**Git HEAD:** (pending push — auto-sync will capture)
+**Git HEAD:** 525f016 (P8 complete push)
+
+---
+
+**Session #:** 25 (continued)
+**Date:** 2026-08-08
+**Phase:** 9
+**What was done:**
+- **P9-1 Helm chart** ✅ — `infra/helm/sentinelai/` (22 files)
+  - Chart.yaml, values.yaml, _helpers.tpl
+  - Deployments + Services: postgres, redis, neo4j, backend, worker, beat, frontend
+  - PVCs: postgres (20Gi), redis (5Gi), neo4j (10Gi)
+  - ConfigMap: all non-secret env vars, DB URLs constructed from release name
+  - Secret: all passwords/keys via `stringData` with `required` guard on critical values
+  - Ingress: nginx-ingress, TLS, WS annotation, path routing (backend API/auth/ws, frontend /)
+  - migrations-job: post-install/upgrade Helm hook, `alembic upgrade head`
+- **P9-2 Deployment runbook** ✅ — `docs/deployment/on-premise.md`
+  - Prerequisites table (Docker/K8s paths), resource requirements, quick-start
+  - Docker Compose path: env setup, TLS (certbot/manual), build, migrate, start, verify
+  - Kubernetes path: Helm install/upgrade, cert-manager ClusterIssuer
+  - Upgrade procedures for both paths
+  - Backup/restore: postgres pg_dump, neo4j neo4j-admin dump
+  - Troubleshooting section (common failure modes)
+  - Env var reference table
+- **P9-3 Quick-start script** ✅ — `scripts/deploy.sh`
+  - Interactive: choose Compose vs K8s
+  - Validates prerequisites (docker, kubectl, helm)
+  - Auto-generates secrets (JWT, PG, Redis, Neo4j) via python3 secrets module
+  - Collects domain + Anthropic key; patches .env.prod in-place
+  - Compose path: starts infra, waits for postgres healthcheck, runs migrations, starts all services
+  - K8s path: creates namespace, builds values override from .env.prod, helm install/upgrade --wait
+  - bash -n syntax check: OK
+**Decisions made:**
+- Helm chart uses `sentinelai.image` helper for optional global registry prefix (ghcr.io etc)
+- `required` guard on postgresPassword/redisPassword/neo4jPassword/jwtSecretKey in secret.yaml — `helm install` fails fast with clear message if omitted
+- deploy.sh generates secrets locally (no external dep), patches .env.prod with sed, chmod 600
+- Migrations run in isolated docker run (Compose) or Helm hook Job (K8s) — never in the app container startup
+**Blockers:** helm not installed locally — CLI should run: `brew install helm && helm lint infra/helm/sentinelai --set secrets.postgresPassword=x --set secrets.redisPassword=x --set secrets.neo4jPassword=x --set secrets.jwtSecretKey=x`
+**Next session should:**
+- P9 remaining: P9-4 optional — seed data / demo org script
+- Or decide Phase 10 direction
+
+**Git HEAD:** (pending push)
 
 **Restart Celery worker command:**
 ```bash

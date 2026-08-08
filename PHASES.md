@@ -155,4 +155,4 @@
 | Production Docker Compose stack (P8-3) | ✅ | Nginx + TLS + internal network; backend/frontend Dockerfiles |
 | SSO / SAML / OIDC auth (P8-4) | ✅ | Google OIDC; /auth/oidc/login + /callback; auto-provision users |
 | Multi-tenant billing | ⬜ | |
-| On-premise deployment guide | ⬜ | |
+| On-premise deployment guide | ✅ | Helm chart (22 templates) + Docker Compose runbook + deploy.sh |
