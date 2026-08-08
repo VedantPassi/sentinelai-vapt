@@ -46,6 +46,13 @@ class Settings(BaseSettings):
     jira_api_token: str = ""
     jira_project_key: str = ""
 
+    # OIDC / SSO
+    oidc_enabled: bool = False
+    oidc_issuer: str = "https://accounts.google.com"
+    oidc_client_id: str = ""
+    oidc_client_secret: str = ""
+    oidc_redirect_uri: str = "http://localhost:8000/auth/oidc/callback"
+
     # SIEM
     siem_enabled: bool = False
     splunk_hec_url: str = ""

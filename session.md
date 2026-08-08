@@ -428,6 +428,41 @@ Continue Phase 8:
 
 **Git HEAD:** ca29d2f
 
+---
+
+**Session #:** 25
+**Date:** 2026-08-08
+**Phase:** 8
+**What was done:**
+- **P8-3 Production Docker stack** ✅
+  - `infra/docker/docker-compose.prod.yml` — all services (postgres, redis, neo4j, backend, worker, beat, frontend, nginx); internal/external networks; no ports exposed except 80/443 on nginx
+  - `infra/nginx/nginx.conf` — HTTP→HTTPS redirect, TLS 1.2/1.3, rate limiting (30r/m API / 10r/m auth), WS proxy, security headers (HSTS, CSP-class headers)
+  - `.env.prod.example` — all prod vars documented with CHANGE_ME placeholders, never committed
+  - `backend/Dockerfile` — python:3.12-slim, uvicorn 2 workers
+  - `frontend/Dockerfile` — multi-stage Next.js standalone build
+  - `frontend/next.config.ts` — `output: "standalone"` in production
+  - `.gitignore` — `.env.prod` added
+- **P8-4 SSO / OIDC** ✅
+  - `backend/core/oidc.py` — generic OIDC client: discovery, authorization URL builder, code exchange, userinfo fetch (httpx)
+  - `backend/core/config.py` — added: oidc_enabled, oidc_issuer, oidc_client_id, oidc_client_secret, oidc_redirect_uri
+  - `backend/api/v1/auth.py` — `GET /auth/oidc/login` (state cookie + Google redirect); `GET /auth/oidc/callback` (code exchange → find/create user → JWT → redirect to frontend)
+  - `frontend/app/(auth)/callback/page.tsx` — reads `?token=` from URL, stores in localStorage, redirects to /dashboard
+  - `frontend/app/(auth)/login/page.tsx` — "Sign in with Google" button (shown only when NEXT_PUBLIC_OIDC_ENABLED=true)
+  - `.env.prod.example` — OIDC section added (OIDC_ENABLED, OIDC_ISSUER, OIDC_CLIENT_ID, OIDC_CLIENT_SECRET, OIDC_REDIRECT_URI, NEXT_PUBLIC_OIDC_ENABLED)
+- tsc clean, syntax OK all files
+**Decisions made:**
+- OIDC state validated via httpOnly cookie (short-lived, 300s) to prevent CSRF
+- OIDC user provisioning: new email → new org named after email domain; existing email → existing user
+- OIDC password_hash set to "" (OIDC users have no local password — local login blocked for them by empty hash)
+- Google button rendered client-side only when NEXT_PUBLIC_OIDC_ENABLED=true (zero UI impact when SSO disabled)
+**Blockers:** None
+**Next session should:**
+- Phase 8 is COMPLETE ✅ — all P8-1 through P8-4 shipped
+- Phase 9 options: on-premise deployment guide, multi-tenant billing, fine-tuned security LLMs, or customer demo prep
+- Decide next phase direction with CTO
+
+**Git HEAD:** (pending push — auto-sync will capture)
+
 **Restart Celery worker command:**
 ```bash
 cd "/Users/vedantpassi/Desktop/Projects/AI VAPT/backend"

@@ -1,8 +1,8 @@
 # Phase 8 Audit Report — Polish & Hardening
 
-**Date:** 2026-08-07
-**Git HEAD:** 1d7e5d2
-**Status:** IN PROGRESS 🔵 (P8-1 ✅ P8-2 ✅ P8-3 ⬜ P8-4 ⬜)
+**Date:** 2026-08-08
+**Git HEAD:** (session 25 — pending final push)
+**Status:** COMPLETE ✅ (P8-1 ✅ P8-2 ✅ P8-3 ✅ P8-4 ✅)
 
 ---
 
@@ -114,24 +114,123 @@ Status per control:
 
 ---
 
-## P8-3 — Production Docker Stack ⬜ (next)
+## P8-3 — Production Docker Stack ✅ (session 25)
 
-Planned:
-- `infra/docker/docker-compose.prod.yml` — Nginx, TLS termination, all services
-- `infra/nginx/nginx.conf` — reverse proxy backend + frontend, SSL config
-- `.env.prod.example` — documented production env vars
-- Health checks on all services
-- Secrets via Docker secrets or env file (not baked into image)
+### Deliverables
+
+**`infra/docker/docker-compose.prod.yml`:**
+- Services: postgres, redis, neo4j, backend, worker (Celery), beat (Celery Beat), frontend, nginx
+- `internal` network (bridge, no external access) for all services; `external` network only for nginx
+- No ports exposed except 80/443 on nginx
+- Redis password-protected in prod (`--requirepass`)
+- Health checks on postgres, redis, neo4j, backend
+- All secrets from `.env.prod` (never baked into image)
+
+**`infra/nginx/nginx.conf`:**
+- HTTP → HTTPS permanent redirect (301)
+- TLS 1.2/1.3 only; modern cipher suite; `ssl_session_cache`
+- Security headers: HSTS (63072000s + preload), X-Frame-Options, X-Content-Type-Options, X-XSS-Protection, Referrer-Policy
+- Rate limiting: `30r/m` on `/api/`, `10r/m` on auth endpoints
+- WS proxy: `/agent-scans/ws/` with `Upgrade` header passthrough; 3600s timeout
+- `/health` unrated (liveness probe)
+- `client_max_body_size 50M`
+
+**`backend/Dockerfile`:** python:3.12-slim, `uvicorn main:app --workers 2`
+
+**`frontend/Dockerfile`:** Multi-stage — `deps` (npm ci) → `builder` (next build, standalone) → `runner` (node server.js)
+
+**`frontend/next.config.ts`:** `output: "standalone"` when `NODE_ENV=production`
+
+**`.env.prod.example`:** All vars documented with `CHANGE_ME` placeholders — postgres, redis (password), neo4j, JWT, LLM, domain, TLS cert path, BH, AWS, SIEM, Slack/Jira, OIDC
+
+**`.gitignore`:** `.env.prod` added
 
 ---
 
-## P8-4 — SSO / OIDC ⬜ (planned)
+## P8-4 — SSO / OIDC ✅ (session 25)
 
-Planned:
-- `python-jose` + `httpx` OIDC flow (Google / Azure AD)
-- `POST /auth/oidc/callback` — exchange code for user, create/link org account
-- `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` in `.env`
-- Frontend: "Sign in with Google" button on login page
+### Deliverables
+
+**`backend/core/oidc.py` (new):**
+```python
+async def _discovery() -> dict  # fetches {issuer}/.well-known/openid-configuration
+def build_authorization_url(state: str) -> str  # constructs redirect URL
+async def exchange_code(code: str) -> dict  # POST to token_endpoint
+async def fetch_userinfo(access_token: str) -> dict  # GET userinfo_endpoint
+```
+
+**`backend/core/config.py`:**
+```python
+oidc_enabled: bool = False
+oidc_issuer: str = "https://accounts.google.com"
+oidc_client_id: str = ""
+oidc_client_secret: str = ""
+oidc_redirect_uri: str = "http://localhost:8000/auth/oidc/callback"
+```
+
+**`backend/api/v1/auth.py` — 2 new endpoints:**
+
+`GET /auth/oidc/login`:
+- Returns 404 if `oidc_enabled=false`
+- Generates `state = secrets.token_urlsafe(16)`, stores in httpOnly cookie (5 min TTL)
+- Redirects to Google authorization URL
+
+`GET /auth/oidc/callback?code=...&state=...`:
+- Validates state cookie (CSRF protection)
+- Exchanges code → access token → userinfo
+- Finds existing user by email OR provisions new user (new org named after email domain; role=admin; empty password_hash — local login blocked)
+- Issues JWT → `RedirectResponse` to `{FRONTEND_URL}/auth/callback?token={jwt}`
+
+**`frontend/app/(auth)/callback/page.tsx` (new):**
+- Reads `?token=` from URL → `localStorage.setItem("access_token", token)` → `router.replace("/dashboard")`
+- On missing token → `router.replace("/login?error=sso_failed")`
+
+**`frontend/app/(auth)/login/page.tsx`:**
+- "Sign in with Google" button rendered only when `NEXT_PUBLIC_OIDC_ENABLED === "true"`
+- Inline Google SVG logo, links directly to `GET /auth/oidc/login`
+- Divider between email/password form and SSO button
+
+**`.env.prod.example`:** OIDC section added
+
+**Verified:** syntax OK all backend files, tsc zero errors
+
+---
+
+## Files Changed (Full Phase 8)
+
+**Backend:**
+- `core/deps.py` (P8-1: require_roles factory)
+- `api/v1/targets.py` (P8-1: RBAC guards)
+- `api/v1/agent_scans.py` (P8-1: RBAC guards)
+- `api/v1/findings.py` (P8-1: RBAC guards)
+- `api/v1/integrations.py` (P8-1: RBAC guards)
+- `api/v1/schedules.py` (P8-1: RBAC guards)
+- `api/v1/users.py` (P8-1: new — admin user management)
+- `api/v1/auth.py` (P8-1: GET /auth/me; P8-4: OIDC login + callback)
+- `api/v1/compliance.py` (P8-2: new — compliance PDF)
+- `core/compliance.py` (P8-2: new — framework mapping)
+- `core/config.py` (P8-4: OIDC fields)
+- `core/oidc.py` (P8-4: new — OIDC client)
+- `main.py` (P8-1/P8-2: routers registered)
+- `Dockerfile` (P8-3: new)
+
+**Frontend:**
+- `contexts/UserContext.tsx` (P8-1: new)
+- `app/(dashboard)/layout.tsx` (P8-1: UserProvider, role-aware nav)
+- `app/(dashboard)/users/page.tsx` (P8-1: new)
+- `app/(dashboard)/agent-scans/page.tsx` (P8-1: viewer gating; P8-2: compliance buttons)
+- `app/(dashboard)/schedules/page.tsx` (P8-1: viewer gating)
+- `lib/api.ts` (P8-1: user management functions)
+- `app/(auth)/login/page.tsx` (P8-4: Google SSO button)
+- `app/(auth)/callback/page.tsx` (P8-4: new — OIDC token handler)
+- `Dockerfile` (P8-3: new)
+- `next.config.ts` (P8-3: standalone output)
+
+**Infra:**
+- `infra/docker/docker-compose.prod.yml` (P8-3: new)
+- `infra/nginx/nginx.conf` (P8-3: new)
+- `.env.prod.example` (P8-3/P8-4: new)
+- `.gitignore` (P8-3: .env.prod added)
 
 ---
 

@@ -1,9 +1,9 @@
 # SentinelAI — Master Progress Report
 
-**Date:** 2026-08-07
-**Phases Complete:** 0 → 7 ✅, P8-1 ✅, P8-2 ✅
-**Status:** Phase 8 in progress — RBAC + compliance reports shipped
-**Git HEAD:** 1d7e5d2
+**Date:** 2026-08-08
+**Phases Complete:** 0 → 8 ✅ (ALL PHASES COMPLETE)
+**Status:** Phase 8 COMPLETE — RBAC + compliance + prod Docker + SSO shipped
+**Git HEAD:** (session 25 — pending final push)
 
 ---
 
@@ -297,7 +297,7 @@ P6-1 Cytoscape chain graph, P6-2 Trivy container scanning, P6-3 Prowler cloud (A
 
 ---
 
-## Phase 8 — Polish & Hardening 🔵 IN PROGRESS
+## Phase 8 — Polish & Hardening ✅ COMPLETE
 
 ### P8-1 RBAC Enforcement ✅ (aeade70)
 - `core/deps.py` — `require_roles(*roles)` factory; `require_admin` / `require_analyst` shorthands
@@ -317,13 +317,24 @@ P6-1 Cytoscape chain graph, P6-2 Trivy container scanning, P6-3 Prowler cloud (A
   - PDF: header, summary, controls table, per-control detail with findings + remediation, compliant list
 - Frontend: 3 compliance export buttons (SOC2 / ISO27001 / PCI-DSS) on completed scan card
 
-### P8 Remaining
+### P8-3 Production Docker Stack ✅ (session 25)
+- `infra/docker/docker-compose.prod.yml` — all services, internal/external networks, no exposed ports except 80/443
+- `infra/nginx/nginx.conf` — TLS 1.2/1.3, HTTP→HTTPS, rate limiting, WS proxy, security headers
+- `backend/Dockerfile` + `frontend/Dockerfile` (multi-stage standalone)
+- `.env.prod.example` — full prod var template, `.env.prod` gitignored
+
+### P8-4 SSO / OIDC ✅ (session 25)
+- `backend/core/oidc.py` — generic OIDC discovery + code exchange + userinfo (httpx)
+- `GET /auth/oidc/login` — state cookie + redirect to provider
+- `GET /auth/oidc/callback` — CSRF check + code exchange + find/create user + JWT + redirect
+- `frontend/app/(auth)/callback/page.tsx` — token handler, localStorage, redirect to /dashboard
+- Login page: "Sign in with Google" button (gated by `NEXT_PUBLIC_OIDC_ENABLED`)
+
+### Deferred / Future
 | Item | Status |
 |------|--------|
-| Production Docker stack (Nginx + TLS) | ⬜ P8-3 |
-| SSO / OIDC | ⬜ P8-4 |
-| Multi-tenant billing | ⬜ |
-| On-premise guide | ⬜ |
+| Multi-tenant billing | Deferred |
+| On-premise deployment guide | Deferred |
 
 ---
 

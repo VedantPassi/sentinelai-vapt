@@ -1,12 +1,16 @@
+import secrets
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.config import settings
 from core.db import get_db
 from core.deps import get_current_user
+from core.oidc import build_authorization_url, exchange_code, fetch_userinfo
 from core.security import create_access_token, hash_password, verify_password
 from models.models import Organization, User
 
@@ -90,3 +94,73 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)) -> Token
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_user)) -> UserResponse:
     return UserResponse.model_validate(current_user)
+
+
+@router.get("/oidc/login")
+async def oidc_login(request: Request) -> RedirectResponse:
+    if not settings.oidc_enabled:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="SSO not enabled")
+    state = secrets.token_urlsafe(16)
+    # Store state in session cookie for CSRF validation — use a signed value
+    # In prod this should be stored server-side; here we embed it in the redirect
+    # and validate it on callback via the same state value echoed by the provider.
+    url = build_authorization_url(state=state)
+    response = RedirectResponse(url=url)
+    response.set_cookie("oidc_state", state, httponly=True, samesite="lax", max_age=300)
+    return response
+
+
+@router.get("/oidc/callback")
+async def oidc_callback(
+    code: str = Query(...),
+    state: str = Query(...),
+    request: Request = None,
+    db: AsyncSession = Depends(get_db),
+) -> RedirectResponse:
+    if not settings.oidc_enabled:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="SSO not enabled")
+
+    # Validate state to prevent CSRF
+    cookie_state = request.cookies.get("oidc_state")
+    if not cookie_state or cookie_state != state:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid OIDC state")
+
+    try:
+        tokens = await exchange_code(code)
+        userinfo = await fetch_userinfo(tokens["access_token"])
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=f"OIDC exchange failed: {exc}") from exc
+
+    email: str | None = userinfo.get("email")
+    if not email:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="OIDC provider did not return email")
+
+    # Find existing user or provision a new org + admin user
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        org_name = userinfo.get("hd") or email.split("@")[-1]
+        org = Organization(id=uuid.uuid4(), name=org_name)
+        db.add(org)
+        await db.flush()
+        user = User(
+            id=uuid.uuid4(),
+            org_id=org.id,
+            email=email,
+            password_hash="",  # OIDC users have no local password
+            role="admin",
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+
+    token = create_access_token(
+        subject=str(user.id),
+        extra_claims={"org_id": str(user.org_id), "role": user.role},
+    )
+
+    frontend_url = settings.cors_origins[0] if settings.cors_origins else "http://localhost:3000"
+    response = RedirectResponse(url=f"{frontend_url}/auth/callback?token={token}")
+    response.delete_cookie("oidc_state")
+    return response
