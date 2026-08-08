@@ -45,3 +45,4 @@ pgdata/
 redisdata/
 .claude/
 .prowler-venv/
+.env.prod
