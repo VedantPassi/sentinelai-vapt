@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sentinelai.fullname" . }}-beat
+  labels:
+    {{- include "sentinelai.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "sentinelai.name" . }}
+      app.kubernetes.io/component: beat
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "sentinelai.name" . }}
+        app.kubernetes.io/component: beat
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: beat
+          image: {{ include "sentinelai.image" (dict "global" .Values.global "image" .Values.backend.image) }}
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          command:
+            - celery
+            - -A
+            - workers.beat_worker
+            - beat
+            - --loglevel=info
+            - --scheduler
+            - celery.beat:PersistentScheduler
+          envFrom:
+            - configMapRef:
+                name: {{ include "sentinelai.fullname" . }}-config
+            - secretRef:
+                name: {{ include "sentinelai.fullname" . }}-secrets
+          resources:
+            {{- toYaml .Values.beat.resources | nindent 12 }}

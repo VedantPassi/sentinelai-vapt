@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "sentinelai.fullname" . }}-backend
+  labels:
+    {{- include "sentinelai.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: {{ include "sentinelai.name" . }}
+    app.kubernetes.io/component: backend
+  ports:
+    - port: 8000
+      targetPort: 8000

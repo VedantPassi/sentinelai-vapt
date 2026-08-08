@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sentinelai.fullname" . }}-neo4j
+  labels:
+    {{- include "sentinelai.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "sentinelai.name" . }}
+      app.kubernetes.io/component: neo4j
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "sentinelai.name" . }}
+        app.kubernetes.io/component: neo4j
+    spec:
+      containers:
+        - name: neo4j
+          image: {{ .Values.neo4j.image }}
+          ports:
+            - containerPort: 7474
+            - containerPort: 7687
+          env:
+            - name: NEO4J_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "sentinelai.fullname" . }}-secrets
+                  key: NEO4J_PASSWORD
+            - name: NEO4J_AUTH
+              value: "$(NEO4J_USER)/$(NEO4J_PASSWORD)"
+            - name: NEO4J_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "sentinelai.fullname" . }}-config
+                  key: NEO4J_USER
+            - name: NEO4J_PLUGINS
+              value: '["apoc"]'
+            - name: NEO4J_dbms_security_procedures_unrestricted
+              value: "apoc.*"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 7474
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 7474
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.neo4j.resources | nindent 12 }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "sentinelai.fullname" . }}-neo4j-data

@@ -1,0 +1,146 @@
+# ============================================================
+# SentinelAI Helm values — override in values.prod.yaml
+# ============================================================
+
+global:
+  imageRegistry: ""        # e.g. "ghcr.io/yourorg/" — leave empty for local builds
+  imagePullSecrets: []
+
+# ---- Domain & TLS ----------------------------------------
+ingress:
+  enabled: true
+  className: nginx
+  host: sentinelai.example.com
+  tls:
+    enabled: true
+    secretName: sentinelai-tls   # pre-existing Secret or cert-manager managed
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+
+# ---- Backend ---------------------------------------------
+backend:
+  image:
+    repository: sentinelai/backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 2
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  env:
+    LLM_PROVIDER: anthropic
+    LOG_LEVEL: INFO
+    ENVIRONMENT: production
+
+# ---- Celery Worker ---------------------------------------
+worker:
+  image:
+    repository: sentinelai/backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 2
+  concurrency: 2
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+
+# ---- Celery Beat -----------------------------------------
+beat:
+  image:
+    repository: sentinelai/backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+# ---- Frontend --------------------------------------------
+frontend:
+  image:
+    repository: sentinelai/frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 2
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# ---- PostgreSQL ------------------------------------------
+postgres:
+  image: postgres:16-alpine
+  storage: 20Gi
+  storageClassName: ""      # use cluster default
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+# ---- Redis -----------------------------------------------
+redis:
+  image: redis:7-alpine
+  storage: 5Gi
+  storageClassName: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+# ---- Neo4j -----------------------------------------------
+neo4j:
+  image: neo4j:5-community
+  storage: 10Gi
+  storageClassName: ""
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+
+# ---- Secrets (set via --set or values.prod.yaml) ---------
+# NEVER commit real values here
+secrets:
+  postgresPassword: ""
+  redisPassword: ""
+  neo4jPassword: ""
+  jwtSecretKey: ""
+  anthropicApiKey: ""
+  bloodhoundSecret: ""
+  awsAccessKeyId: ""
+  awsSecretAccessKey: ""
+  oidcClientSecret: ""
+
+# ---- Non-secret config -----------------------------------
+config:
+  postgresDd: sentinelai
+  postgresUser: sentinel
+  neo4jUser: neo4j
+  awsDefaultRegion: us-east-1
+  bloodhoundUrl: ""
+  oidcEnabled: "false"
+  oidcIssuer: "https://accounts.google.com"
+  oidcClientId: ""
+  siemEnabled: "false"

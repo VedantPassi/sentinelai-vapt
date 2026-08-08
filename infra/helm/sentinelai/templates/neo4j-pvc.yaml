@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "sentinelai.fullname" . }}-neo4j-data
+  labels:
+    {{- include "sentinelai.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- if .Values.neo4j.storageClassName }}
+  storageClassName: {{ .Values.neo4j.storageClassName }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.neo4j.storage }}

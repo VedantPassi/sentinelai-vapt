@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "sentinelai.fullname" . }}-config
+  labels:
+    {{- include "sentinelai.labels" . | nindent 4 }}
+data:
+  POSTGRES_DB: {{ .Values.config.postgresDd | quote }}
+  POSTGRES_USER: {{ .Values.config.postgresUser | quote }}
+  POSTGRES_HOST: {{ include "sentinelai.fullname" . }}-postgres
+  POSTGRES_PORT: "5432"
+  DATABASE_URL: {{ printf "postgresql+asyncpg://%s@%s-postgres:5432/%s" .Values.config.postgresUser (include "sentinelai.fullname" .) .Values.config.postgresDd | quote }}
+  REDIS_URL: {{ printf "redis://:%s@%s-redis:6379/0" "${REDIS_PASSWORD}" (include "sentinelai.fullname" .) | quote }}
+  CELERY_BROKER_URL: {{ printf "redis://:%s@%s-redis:6379/1" "${REDIS_PASSWORD}" (include "sentinelai.fullname" .) | quote }}
+  CELERY_RESULT_BACKEND: {{ printf "redis://:%s@%s-redis:6379/2" "${REDIS_PASSWORD}" (include "sentinelai.fullname" .) | quote }}
+  NEO4J_URI: {{ printf "bolt://%s-neo4j:7687" (include "sentinelai.fullname" .) | quote }}
+  NEO4J_USER: {{ .Values.config.neo4jUser | quote }}
+  JWT_ALGORITHM: "HS256"
+  JWT_ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+  ENVIRONMENT: "production"
+  LOG_LEVEL: {{ .Values.backend.env.LOG_LEVEL | quote }}
+  LLM_PROVIDER: {{ .Values.backend.env.LLM_PROVIDER | quote }}
+  NEXT_PUBLIC_API_URL: {{ printf "https://%s" .Values.ingress.host | quote }}
+  AWS_DEFAULT_REGION: {{ .Values.config.awsDefaultRegion | quote }}
+  BLOODHOUND_URL: {{ .Values.config.bloodhoundUrl | quote }}
+  OIDC_ENABLED: {{ .Values.config.oidcEnabled | quote }}
+  OIDC_ISSUER: {{ .Values.config.oidcIssuer | quote }}
+  OIDC_CLIENT_ID: {{ .Values.config.oidcClientId | quote }}
+  OIDC_REDIRECT_URI: {{ printf "https://%s/auth/oidc/callback" .Values.ingress.host | quote }}
+  NEXT_PUBLIC_OIDC_ENABLED: {{ .Values.config.oidcEnabled | quote }}
+  SIEM_ENABLED: {{ .Values.config.siemEnabled | quote }}
