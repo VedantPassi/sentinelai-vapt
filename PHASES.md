@@ -154,5 +154,6 @@
 | Compliance reports — SOC2/ISO27001/PCI-DSS (P8-2) | ✅ | core/compliance.py mapping + /compliance/{framework} PDF endpoint + frontend export buttons |
 | Production Docker Compose stack (P8-3) | ✅ | Nginx + TLS + internal network; backend/frontend Dockerfiles |
 | SSO / SAML / OIDC auth (P8-4) | ✅ | Google OIDC; /auth/oidc/login + /callback; auto-provision users |
+| Demo seed data (P9-4) | ✅ | scripts/seed_demo.py — demo org, 3 users, 3 targets, 2 scans, 10 findings, 2 chains |
 | Multi-tenant billing | ⬜ | |
 | On-premise deployment guide | ✅ | Helm chart (22 templates) + Docker Compose runbook + deploy.sh |
