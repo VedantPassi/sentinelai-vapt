@@ -1,9 +1,9 @@
 # SentinelAI — Master Progress Report
 
 **Date:** 2026-08-08
-**Phases Complete:** 0 → 8 ✅ (ALL PHASES COMPLETE)
-**Status:** Phase 8 COMPLETE — RBAC + compliance + prod Docker + SSO shipped
-**Git HEAD:** (session 25 — pending final push)
+**Phases Complete:** 0 → 9 ✅ (PLATFORM FEATURE COMPLETE)
+**Status:** All phases shipped — P9 on-premise deployment + demo data complete
+**Git HEAD:** 315e87b
 
 ---
 
@@ -330,11 +330,34 @@ P6-1 Cytoscape chain graph, P6-2 Trivy container scanning, P6-3 Prowler cloud (A
 - `frontend/app/(auth)/callback/page.tsx` — token handler, localStorage, redirect to /dashboard
 - Login page: "Sign in with Google" button (gated by `NEXT_PUBLIC_OIDC_ENABLED`)
 
-### Deferred / Future
+## Phase 9 — On-Premise Deployment ✅ COMPLETE (315e87b)
+
+### P9-1 Helm Chart ✅
+- `infra/helm/sentinelai/` — 22 templates
+- All 8 services: postgres, redis, neo4j, backend, worker, beat, frontend, ingress
+- PVCs (postgres 20Gi, redis 5Gi, neo4j 10Gi), ConfigMap, Secret with required guards
+- migrations Job (post-install/upgrade hook), Ingress (nginx, TLS, WS)
+- Helm lint: PASS
+
+### P9-2 Runbook ✅
+- `docs/deployment/on-premise.md` — Docker Compose + K8s paths, TLS (certbot/manual), upgrade, backup/restore, troubleshooting, env var reference
+
+### P9-3 Deploy Script ✅
+- `scripts/deploy.sh` — interactive; auto-generates secrets; builds images; waits for healthchecks; runs migrations; helm install/upgrade
+
+### P9-4 Demo Seed ✅
+- `scripts/seed_demo.py` — idempotent; AcmeCorp demo org; admin/analyst/viewer users; 3 targets; 2 completed scans; 10 realistic findings (SQLi, XSS, JWT, Redis exposure, runc CVE); 2 attack chains; 1 running scan; 1 weekly schedule
+
+---
+
+## Platform Status: FEATURE COMPLETE
+
+All phases P0–P9 shipped. Deferred items:
+
 | Item | Status |
 |------|--------|
-| Multi-tenant billing | Deferred |
-| On-premise deployment guide | Deferred |
+| Multi-tenant billing (Stripe) | Deferred — no timeline |
+| Fine-tuned security LLM | Deferred |
 
 ---
 

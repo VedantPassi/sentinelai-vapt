@@ -503,7 +503,26 @@ Continue Phase 8:
 - P9 remaining: P9-4 optional — seed data / demo org script
 - Or decide Phase 10 direction
 
-**Git HEAD:** (pending push)
+**Git HEAD:** 315e87b
+
+---
+
+**Session #:** 26
+**Date:** 2026-08-08
+**Phase:** 9
+**What was done:**
+- **P9-1 Helm chart** ✅ — `infra/helm/sentinelai/` (22 files): Chart.yaml, values.yaml, _helpers.tpl, deployments/services/PVCs for all 8 services, ConfigMap, Secret (required guards), Ingress (nginx, TLS, WS), migrations Job (post-install/upgrade hook). Linted by CLI — pass.
+- **P9-2 Runbook** ✅ — `docs/deployment/on-premise.md`: prerequisites, Docker Compose path, K8s/Helm path, TLS (certbot/manual), upgrade steps, backup/restore (pg_dump, neo4j-admin), troubleshooting, env var reference
+- **P9-3 Deploy script** ✅ — `scripts/deploy.sh`: interactive Compose vs K8s; auto-generates secrets; patches .env.prod; builds images; waits for postgres healthcheck; runs migrations; helm install/upgrade --wait. bash -n: OK.
+- **P9-4 Demo seed** ✅ — `scripts/seed_demo.py`: idempotent; AcmeCorp demo org; 3 users (admin/analyst/viewer); 3 targets; 2 completed scans; 10 realistic findings (SQLi, XSS, JWT, Redis exposure, runc CVE); 2 attack chains; 1 running scan; 1 weekly schedule
+- Fixed 2 stale ⬜ markers in Phase 2 (frontend items built in P3)
+- Billing deferred (no timeline)
+- Platform feature-complete across P0–P9
+**Decisions made:** Billing deferred — not starting now
+**Blockers:** None
+**Next session should:** Decide next direction — billing, fine-tuned LLM, or customer demo prep
+
+**Git HEAD:** 315e87b
 
 **Restart Celery worker command:**
 ```bash
