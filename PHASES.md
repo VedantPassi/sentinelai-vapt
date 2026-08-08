@@ -60,8 +60,8 @@
 | Findings storage + retrieval API | ✅ | GET /scans/{id}/findings with pagination |
 | Basic PDF report (fpdf2) | ✅ | `backend/api/v1/reports.py` — live tested |
 | Celery worker for async scan jobs | ✅ | `backend/workers/scan_worker.py` |
-| Frontend: scan launcher UI | ⬜ | Phase 3 |
-| Frontend: findings list view | ⬜ | Phase 3 |
+| Frontend: scan launcher UI | ✅ | Built in Phase 3 |
+| Frontend: findings list view | ✅ | Built in Phase 3 |
 | Test against DVWA or Juice Shop | ✅ | Nmap scan — 5 findings, PDF clean |
 | phase-reports/phase-2-report.md | ✅ | `IMP info/reports/phase-2-audit.md` |
 
