@@ -69,11 +69,11 @@ def seed(db: Session) -> None:
 
     # ── Users ────────────────────────────────────────────────────────────────
     users = [
-        User(id=uuid.uuid4(), org_id=org.id, email="admin@acme-demo.local",
+        User(id=uuid.uuid4(), org_id=org.id, email="admin@acmedemo.example.com",
              password_hash=hash_password("Demo@Admin1"), role="admin"),
-        User(id=uuid.uuid4(), org_id=org.id, email="analyst@acme-demo.local",
+        User(id=uuid.uuid4(), org_id=org.id, email="analyst@acmedemo.example.com",
              password_hash=hash_password("Demo@Analyst1"), role="analyst"),
-        User(id=uuid.uuid4(), org_id=org.id, email="viewer@acme-demo.local",
+        User(id=uuid.uuid4(), org_id=org.id, email="viewer@acmedemo.example.com",
              password_hash=hash_password("Demo@Viewer1"), role="viewer"),
     ]
     db.add_all(users)
@@ -82,13 +82,13 @@ def seed(db: Session) -> None:
 
     # ── Targets ──────────────────────────────────────────────────────────────
     t_web = Target(id=uuid.uuid4(), org_id=org.id, name="Acme Web Portal",
-                   type="web", url="https://portal.acme-demo.local",
+                   type="web", url="https://portal.acmedemo.example.com",
                    asset_criticality=0.9, verified=True)
     t_net = Target(id=uuid.uuid4(), org_id=org.id, name="Acme Corp Network",
                    type="network", url="10.0.0.0/24",
                    asset_criticality=0.8, verified=True)
     t_api = Target(id=uuid.uuid4(), org_id=org.id, name="Acme API Gateway",
-                   type="api", url="https://api.acme-demo.local",
+                   type="api", url="https://api.acmedemo.example.com",
                    asset_criticality=0.95, verified=True)
     targets = [t_web, t_net, t_api]
     db.add_all(targets)
@@ -267,9 +267,9 @@ def seed(db: Session) -> None:
     print("  Demo seed complete!")
     print("=" * 60)
     print(f"  Org:      {DEMO_ORG_NAME}")
-    print(f"  Admin:    admin@acme-demo.local  / Demo@Admin1")
-    print(f"  Analyst:  analyst@acme-demo.local / Demo@Analyst1")
-    print(f"  Viewer:   viewer@acme-demo.local  / Demo@Viewer1")
+    print(f"  Admin:    admin@acmedemo.example.com  / Demo@Admin1")
+    print(f"  Analyst:  analyst@acmedemo.example.com / Demo@Analyst1")
+    print(f"  Viewer:   viewer@acmedemo.example.com  / Demo@Viewer1")
     print(f"  Targets:  {len(targets)}")
     print(f"  Scans:    2 completed, 1 running")
     print(f"  Findings: {len(web_findings) + len(net_findings)} total")

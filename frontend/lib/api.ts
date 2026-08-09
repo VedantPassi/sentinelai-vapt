@@ -20,7 +20,13 @@ async function request<T>(
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new ApiError(res.status, body?.detail ?? res.statusText);
+    const detail = body?.detail;
+    const message = typeof detail === "string"
+      ? detail
+      : Array.isArray(detail)
+        ? detail.map((e: { msg?: string }) => e.msg ?? JSON.stringify(e)).join("; ")
+        : res.statusText;
+    throw new ApiError(res.status, message);
   }
 
   if (res.status === 204) return undefined as T;
