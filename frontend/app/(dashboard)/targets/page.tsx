@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 
 import { ApiError, Target, TargetCreate, createTarget, deleteTarget, listTargets } from "@/lib/api";
+import { useUser } from "@/contexts/UserContext";
 
 export default function TargetsPage() {
+  const { user } = useUser();
   const [targets, setTargets] = useState<Target[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,12 +65,14 @@ export default function TargetsPage() {
           <h1 className="text-2xl font-semibold tracking-tight">Targets</h1>
           <p className="text-sm text-muted-foreground">Manage scan targets for your organization.</p>
         </div>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          {showForm ? "Cancel" : "Add target"}
-        </button>
+        {user?.role !== "viewer" && (
+          <button
+            onClick={() => setShowForm((v) => !v)}
+            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            {showForm ? "Cancel" : "Add target"}
+          </button>
+        )}
       </div>
 
       {showForm && (
@@ -185,12 +189,14 @@ export default function TargetsPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => handleDelete(t.id)}
-                      className="text-xs text-destructive hover:underline"
-                    >
-                      Delete
-                    </button>
+                    {user?.role === "admin" && (
+                      <button
+                        onClick={() => handleDelete(t.id)}
+                        className="text-xs text-destructive hover:underline"
+                      >
+                        Delete
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
