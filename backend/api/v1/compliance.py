@@ -189,13 +189,13 @@ def _build_compliance_pdf(
     if actionable:
         pdf.set_font("Helvetica", "B", 12)
         pdf.set_text_color(20, 20, 20)
-        pdf.cell(0, 8, "Control Detail — Issues Found", new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(0, 8, "Control Detail - Issues Found", new_x="LMARGIN", new_y="NEXT")
 
         for res in actionable:
             r, g, b = _STATUS_COLORS[res.status]
             pdf.set_font("Helvetica", "B", 10)
             pdf.set_text_color(r, g, b)
-            pdf.cell(0, 7, f"{res.control.id} — {_s(res.control.name)}  [{res.status}]",
+            pdf.cell(0, 7, f"{res.control.id} - {_s(res.control.name)}  [{res.status}]",
                      new_x="LMARGIN", new_y="NEXT")
 
             pdf.set_font("Helvetica", "I", 9)
@@ -210,7 +210,7 @@ def _build_compliance_pdf(
                 fr, fg, fb = _SEVERITY_COLORS.get(f.severity, (80, 80, 80))
                 pdf.set_font("Helvetica", "B", 8)
                 pdf.set_text_color(fr, fg, fb)
-                pdf.cell(0, 5, f"  [{f.severity.upper()}] {_s(f.title)} — {f.status}",
+                pdf.cell(0, 5, f"  [{f.severity.upper()}] {_s(f.title)} - {f.status}",
                          new_x="LMARGIN", new_y="NEXT")
                 if f.remediation:
                     pdf.set_font("Helvetica", "I", 8)
@@ -229,7 +229,7 @@ def _build_compliance_pdf(
         pdf.set_font("Helvetica", "", 9)
         pdf.set_text_color(50, 150, 80)
         for res in compliant:
-            pdf.cell(0, 5, f"  {res.control.id} — {_s(res.control.name)}",
+            pdf.cell(0, 5, f"  {res.control.id} - {_s(res.control.name)}",
                      new_x="LMARGIN", new_y="NEXT")
 
     return pdf.output()
