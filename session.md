@@ -524,6 +524,45 @@ Continue Phase 8:
 
 **Git HEAD:** 315e87b
 
+---
+
+**Session #:** 27
+**Date:** 2026-08-09
+**Phase:** Testing
+**What was done:**
+- Fixed `[object Object]` error display bug in login page — `detail` from Pydantic validation errors is an array, not string; fixed in `frontend/lib/api.ts` to map array items to `.msg` strings
+- Fixed seed script email domain — `.local` TLD rejected by Pydantic `EmailStr`; changed to `acmedemo.example.com` in `scripts/seed_demo.py`
+- Deleted old demo org, re-seeded successfully
+- **UI verified:**
+  - Login ✅
+  - Targets page — 3 seeded targets showing ✅
+  - Agent Scans — completed scan with 6 findings (CRITICAL SQLi, HIGH XSS, HIGH JWT, MEDIUM CORS, LOW X-Frame, INFO nginx FP) ✅
+  - Severity badges, status badges (CONFIRMED/FALSE POSITIVE/OPEN) rendering correctly ✅
+  - Confirm/FP/Re-validate buttons visible ✅
+  - Compliance export buttons (SOC2/ISO27001/PCI-DSS) visible on completed scan ✅
+  - Attack Chains — 1 chain "SQL Injection → Auth Bypass → Account Takeover" ✅
+  - Live scan WebSocket terminal streaming recon events ✅
+  - Users page — 3 users (admin/analyst/viewer), role dropdown, invite form ✅
+  - Nav shows "admin@acmedemo.example.com · Admin" ✅
+- Launched network scan against `10.0.0.0/24` — ran 18+ min (nmap -sV on /24 too slow for demo)
+- Killed nmap, plan to retest with `scanme.nmap.org` single-host target
+**Decisions made:**
+- Demo seed emails use `.example.com` not `.local` (Pydantic rejects .local TLD)
+- For live scan testing use `scanme.nmap.org` not subnet ranges
+**Blockers:** None — still need to verify:
+  - Compliance PDF actually downloads
+  - RBAC (viewer can't launch, analyst can't access users)
+  - Schedules page
+  - `scanme.nmap.org` network scan end-to-end
+**Next session should:**
+1. Add target `scanme.nmap.org` (type=network), launch network scan, verify findings + chains appear
+2. Download compliance PDF from completed scan — verify PDF opens
+3. Login as viewer — verify no Launch button, no Users nav
+4. Login as analyst — verify no Users nav
+5. Check schedules page
+
+**Git HEAD:** 315e87b (no new commits this session — bug fixes not yet committed)
+
 **Restart Celery worker command:**
 ```bash
 cd "/Users/vedantpassi/Desktop/Projects/AI VAPT/backend"
