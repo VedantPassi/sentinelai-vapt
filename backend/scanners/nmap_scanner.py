@@ -12,7 +12,7 @@ async def run(target_url: str, config: dict | None = None) -> ScannerResult:
 
     try:
         proc = await asyncio.create_subprocess_exec(
-            "nmap", "-sV", "-oX", "-", "--open", host,
+            "nmap", "-sV", "-T4", "--host-timeout", "90s", "-oX", "-", "--open", host,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
