@@ -528,40 +528,26 @@ Continue Phase 8:
 
 **Session #:** 27
 **Date:** 2026-08-09
-**Phase:** Testing
+**Phase:** Testing + Bug Fixes
 **What was done:**
-- Fixed `[object Object]` error display bug in login page — `detail` from Pydantic validation errors is an array, not string; fixed in `frontend/lib/api.ts` to map array items to `.msg` strings
-- Fixed seed script email domain — `.local` TLD rejected by Pydantic `EmailStr`; changed to `acmedemo.example.com` in `scripts/seed_demo.py`
+- Fixed `[object Object]` error display — Pydantic validation `detail` is array not string; `frontend/lib/api.ts` now maps array items to `.msg` joined by "; " (commit 6b210da)
+- Fixed seed email domain — `.local` TLD rejected by Pydantic `EmailStr`; changed to `acmedemo.example.com` in `scripts/seed_demo.py` (commit 6b210da)
 - Deleted old demo org, re-seeded successfully
-- **UI verified:**
-  - Login ✅
-  - Targets page — 3 seeded targets showing ✅
-  - Agent Scans — completed scan with 6 findings (CRITICAL SQLi, HIGH XSS, HIGH JWT, MEDIUM CORS, LOW X-Frame, INFO nginx FP) ✅
-  - Severity badges, status badges (CONFIRMED/FALSE POSITIVE/OPEN) rendering correctly ✅
-  - Confirm/FP/Re-validate buttons visible ✅
-  - Compliance export buttons (SOC2/ISO27001/PCI-DSS) visible on completed scan ✅
-  - Attack Chains — 1 chain "SQL Injection → Auth Bypass → Account Takeover" ✅
-  - Live scan WebSocket terminal streaming recon events ✅
-  - Users page — 3 users (admin/analyst/viewer), role dropdown, invite form ✅
-  - Nav shows "admin@acmedemo.example.com · Admin" ✅
-- Launched network scan against `10.0.0.0/24` — ran 18+ min (nmap -sV on /24 too slow for demo)
-- Killed nmap, plan to retest with `scanme.nmap.org` single-host target
+- Fixed nmap slow scan — added `-T4 --host-timeout 90s` to `backend/scanners/nmap_scanner.py`; scanme.nmap.org completed in ~16 min, returned 2 findings (OpenSSH + Apache) + 1 attack chain + attack graph (commit db80349)
+- **Fixed compliance PDF 500 error** — em-dash `—` (U+2014) in 4 hardcoded f-strings in `backend/api/v1/compliance.py` bypassed `_s()` sanitizer and crashed fpdf2 latin-1 encoder; replaced all 4 with ASCII `-` (commit 91700a1)
+- **Fixed RBAC on Targets page** — viewer could see "Add target" form and "Delete" buttons; added `useUser()` hook to `frontend/app/(dashboard)/targets/page.tsx`; "Add target" hidden for viewer, "Delete" hidden for non-admin (commit 97baee1)
+- **Full platform E2E verified** (all green):
+  - Login ✅ | Targets (with RBAC) ✅ | Agent Scans + WebSocket ✅
+  - Findings + Validation ✅ | Attack Chains + Graph ✅
+  - Compliance PDFs (SOC2/ISO27001/PCI-DSS download) ✅
+  - RBAC viewer/analyst/admin roles ✅ | Schedules ✅ | Users (admin-only) ✅
 **Decisions made:**
-- Demo seed emails use `.example.com` not `.local` (Pydantic rejects .local TLD)
-- For live scan testing use `scanme.nmap.org` not subnet ranges
-**Blockers:** None — still need to verify:
-  - Compliance PDF actually downloads
-  - RBAC (viewer can't launch, analyst can't access users)
-  - Schedules page
-  - `scanme.nmap.org` network scan end-to-end
-**Next session should:**
-1. Add target `scanme.nmap.org` (type=network), launch network scan, verify findings + chains appear
-2. Download compliance PDF from completed scan — verify PDF opens
-3. Login as viewer — verify no Launch button, no Users nav
-4. Login as analyst — verify no Users nav
-5. Check schedules page
+- Demo seed emails use `.example.com` TLD
+- nmap -T4 --host-timeout 90s for single-host scans
+**Blockers:** None
+**Next session should:** Decide next direction — billing, fine-tuned LLM, customer demo prep, or additional hardening
 
-**Git HEAD:** 315e87b (no new commits this session — bug fixes not yet committed)
+**Git HEAD:** 97baee1
 
 **Restart Celery worker command:**
 ```bash

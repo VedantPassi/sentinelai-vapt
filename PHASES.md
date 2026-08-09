@@ -155,5 +155,29 @@
 | Production Docker Compose stack (P8-3) | ✅ | Nginx + TLS + internal network; backend/frontend Dockerfiles |
 | SSO / SAML / OIDC auth (P8-4) | ✅ | Google OIDC; /auth/oidc/login + /callback; auto-provision users |
 | Demo seed data (P9-4) | ✅ | scripts/seed_demo.py — demo org, 3 users, 3 targets, 2 scans, 10 findings, 2 chains |
-| Multi-tenant billing | ⬜ | |
+| Multi-tenant billing | ⬜ | Deferred — no timeline |
 | On-premise deployment guide | ✅ | Helm chart (22 templates) + Docker Compose runbook + deploy.sh |
+
+---
+
+## Full Platform E2E Verification ✅ (2026-08-09, git HEAD 97baee1)
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Login / Register | ✅ | |
+| Targets (RBAC-gated Add/Delete) | ✅ | Viewer read-only; Admin delete only |
+| Agent Scans + WebSocket live events | ✅ | |
+| Findings (confirm/FP/revalidate) | ✅ | |
+| Attack Chains + Cytoscape graph | ✅ | |
+| Attack Path Graph (Neo4j) | ✅ | |
+| Compliance PDFs (SOC2/ISO27001/PCI-DSS) | ✅ | Fixed: em-dash latin-1 crash |
+| RBAC (viewer/analyst/admin) | ✅ | Fixed: targets page missing role gate |
+| Schedules (create/pause/delete) | ✅ | |
+| Users page (admin-only) | ✅ | |
+
+**Bug fixes landed this session:**
+- `frontend/lib/api.ts`: Pydantic array `detail` → `.msg` join (fixed `[object Object]` on login errors)
+- `scripts/seed_demo.py`: `.local` → `.example.com` TLD in seed emails
+- `backend/scanners/nmap_scanner.py`: `-T4 --host-timeout 90s` (fast single-host scans)
+- `backend/api/v1/compliance.py`: 4 em-dash literals → ASCII `-` (fpdf2 latin-1 crash)
+- `frontend/app/(dashboard)/targets/page.tsx`: role-gated Add target + Delete buttons
