@@ -85,7 +85,7 @@ async def _validate_all(findings: list[FindingData], url: str, target_type: str 
 
     for chunk in chunks:
         try:
-            await _validate_chunk(chunk, offset, url, results)
+            await _validate_chunk(chunk, offset, url, results, to_validate_indices)
         except LLMError as exc:
             logger.warning("Validation LLM failed for chunk at offset %d: %s", offset, exc)
         offset += len(chunk)
@@ -98,6 +98,7 @@ async def _validate_chunk(
     offset: int,
     url: str,
     results: list[FindingData],
+    to_validate_indices: list[int],
 ) -> None:
     findings_json = json.dumps([
         {
@@ -120,10 +121,11 @@ async def _validate_chunk(
 
     data = json.loads(raw[start:end])
     for item in data:
-        idx = item.get("id")
-        if idx is None or not (0 <= idx < len(results)):
-            logger.warning("Validation response has out-of-range id: %s", idx)
+        chunk_idx = item.get("id")
+        if chunk_idx is None or not (0 <= chunk_idx < len(to_validate_indices)):
+            logger.warning("Validation response has out-of-range id: %s", chunk_idx)
             continue
-        results[idx].status = item.get("status", "open")
-        results[idx].risk_score = int(item.get("risk_score", 0))
-        results[idx].validation_reasoning = item.get("reasoning", "")
+        results_idx = to_validate_indices[offset + chunk_idx]
+        results[results_idx].status = item.get("status", "open")
+        results[results_idx].risk_score = int(item.get("risk_score", 0))
+        results[results_idx].validation_reasoning = item.get("reasoning", "")

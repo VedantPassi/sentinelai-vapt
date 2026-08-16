@@ -3,7 +3,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import RedirectResponse
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -31,13 +31,12 @@ class RegisterRequest(BaseModel):
     password: str
     org_name: str = "Default Organization"
 
+    @field_validator("password")
     @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-
-    def model_post_init(self, __context: object) -> None:
-        if len(self.password) < 8:
+    def password_min_length(cls, v: str) -> str:
+        if len(v) < 8:
             raise ValueError("Password must be at least 8 characters")
+        return v
 
 
 class LoginRequest(BaseModel):
@@ -104,7 +103,7 @@ async def oidc_login(request: Request) -> RedirectResponse:
     # Store state in session cookie for CSRF validation — use a signed value
     # In prod this should be stored server-side; here we embed it in the redirect
     # and validate it on callback via the same state value echoed by the provider.
-    url = build_authorization_url(state=state)
+    url = await build_authorization_url(state=state)
     response = RedirectResponse(url=url)
     response.set_cookie("oidc_state", state, httponly=True, samesite="lax", max_age=300)
     return response

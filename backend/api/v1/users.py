@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -29,19 +29,30 @@ class InviteRequest(BaseModel):
     password: str
     role: str = "analyst"
 
-    def model_post_init(self, __context: object) -> None:
-        if self.role not in ("admin", "analyst", "viewer"):
+    @field_validator("role")
+    @classmethod
+    def role_must_be_valid(cls, v: str) -> str:
+        if v not in ("admin", "analyst", "viewer"):
             raise ValueError("role must be admin, analyst, or viewer")
-        if len(self.password) < 8:
+        return v
+
+    @field_validator("password")
+    @classmethod
+    def password_min_length(cls, v: str) -> str:
+        if len(v) < 8:
             raise ValueError("password must be at least 8 characters")
+        return v
 
 
 class RolePatch(BaseModel):
     role: str
 
-    def model_post_init(self, __context: object) -> None:
-        if self.role not in ("admin", "analyst", "viewer"):
+    @field_validator("role")
+    @classmethod
+    def role_must_be_valid(cls, v: str) -> str:
+        if v not in ("admin", "analyst", "viewer"):
             raise ValueError("role must be admin, analyst, or viewer")
+        return v
 
 
 @router.get("", response_model=list[UserResponse])

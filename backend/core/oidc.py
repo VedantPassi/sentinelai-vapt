@@ -18,20 +18,16 @@ async def _discovery() -> dict[str, Any]:
         return resp.json()
 
 
-def build_authorization_url(state: str) -> str:
+async def build_authorization_url(state: str) -> str:
+    disc = await _discovery()
+    base = disc["authorization_endpoint"]
     params = {
         "client_id": settings.oidc_client_id,
         "redirect_uri": settings.oidc_redirect_uri,
         "response_type": "code",
         "scope": "openid email profile",
         "state": state,
-        "access_type": "online",
     }
-    # Google well-known endpoint — works for any standard OIDC provider too
-    base = f"{settings.oidc_issuer.rstrip('/')}/o/oauth2/v2/auth"
-    # Fall back to generic OIDC if not Google
-    if "google" not in settings.oidc_issuer:
-        base = f"{settings.oidc_issuer.rstrip('/')}/authorize"
     return f"{base}?{urllib.parse.urlencode(params)}"
 
 

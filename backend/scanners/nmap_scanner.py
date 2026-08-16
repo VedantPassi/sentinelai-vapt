@@ -62,7 +62,7 @@ def _parse_xml(xml_output: str) -> list[FindingData]:
 
             findings.append(FindingData(
                 category="network",
-                severity="info",
+                severity="low",
                 title=f"Open port {portid}/{protocol} — {service}",
                 description=f"Host {addr} has {service} ({version or 'unknown version'}) "
                             f"listening on {portid}/{protocol}.",

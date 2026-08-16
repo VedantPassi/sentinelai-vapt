@@ -187,7 +187,24 @@ async def agent_scan_ws(
     token: str | None = None,
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    if not token or not decode_access_token(token).get("sub"):
+    payload = decode_access_token(token) if token else {}
+    user_id = payload.get("sub")
+    org_id = payload.get("org_id")
+    if not user_id or not org_id:
+        await websocket.close(code=1008)
+        return
+
+    # Verify scan belongs to caller's org before accepting
+    try:
+        scan_check = await db.execute(
+            select(ScanJob)
+            .join(Target, ScanJob.target_id == Target.id)
+            .where(ScanJob.id == uuid.UUID(scan_id), Target.org_id == uuid.UUID(org_id))
+        )
+        if scan_check.scalar_one_or_none() is None:
+            await websocket.close(code=1008)
+            return
+    except Exception:
         await websocket.close(code=1008)
         return
 

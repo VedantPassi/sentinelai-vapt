@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.db import get_db
-from core.deps import get_current_user
+from core.deps import get_current_user, require_analyst
 from models.models import Finding, ScanJob, Target, User
 from workers.scan_worker import run_scan
 
@@ -61,7 +61,7 @@ async def _get_scan_or_404(scan_id: uuid.UUID, org_id: uuid.UUID, db: AsyncSessi
 @router.post("", response_model=ScanResponse, status_code=status.HTTP_201_CREATED)
 async def create_scan(
     body: ScanCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_analyst),
     db: AsyncSession = Depends(get_db),
 ) -> ScanJob:
     target_result = await db.execute(
@@ -70,6 +70,8 @@ async def create_scan(
     target = target_result.scalar_one_or_none()
     if not target:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Target not found")
+    if not target.verified:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Target must be verified before scanning")
 
     scan = ScanJob(
         id=uuid.uuid4(),

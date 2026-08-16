@@ -167,7 +167,7 @@ async def validate_finding(
             new_status = data.get("status", "open")
             risk_score = int(data.get("risk_score", 0))
             reasoning = data.get("reasoning", "")
-        except (LLMError, Exception):
+        except Exception:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="LLM validation unavailable — try again later",

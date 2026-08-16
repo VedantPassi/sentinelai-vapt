@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.db import get_db
 from core.deps import get_current_user
 from core.neo4j_client import run_query
+from models.models import ScanJob, Target, User
 
 router = APIRouter(prefix="/attack-graph", tags=["attack-graph"])
 
@@ -46,12 +52,25 @@ class BlastRadiusOut(BaseModel):
     max_impact: str
 
 
+async def _assert_scan_org(scan_id: str, org_id: uuid.UUID, db: AsyncSession) -> None:
+    """Raise 404 if scan_id doesn't belong to the caller's org."""
+    result = await db.execute(
+        select(ScanJob)
+        .join(Target, ScanJob.target_id == Target.id)
+        .where(ScanJob.id == uuid.UUID(scan_id), Target.org_id == org_id)
+    )
+    if result.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="Scan not found")
+
+
 @router.get("/scan/{scan_id}", response_model=AttackGraphOut)
 async def get_attack_graph(
     scan_id: str,
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> AttackGraphOut:
-    """Full attack graph for a scan — findings + chains + steps as nodes/edges."""
+    await _assert_scan_org(scan_id, current_user.org_id, db)
+
     rows = await run_query(
         """
         MATCH (s:Scan {id: $scan_id})
@@ -121,9 +140,11 @@ async def get_attack_graph(
 @router.get("/scan/{scan_id}/paths", response_model=list[ChainPathOut])
 async def get_attack_paths(
     scan_id: str,
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> list[ChainPathOut]:
-    """All attack chains with ordered steps for a scan."""
+    await _assert_scan_org(scan_id, current_user.org_id, db)
+
     rows = await run_query(
         """
         MATCH (s:Scan {id: $scan_id})-[:HAS_CHAIN]->(c:Chain)
@@ -153,9 +174,11 @@ async def get_attack_paths(
 @router.get("/scan/{scan_id}/blast-radius", response_model=list[BlastRadiusOut])
 async def get_blast_radius(
     scan_id: str,
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> list[BlastRadiusOut]:
-    """Which findings appear in the most chains — highest leverage for attacker."""
+    await _assert_scan_org(scan_id, current_user.org_id, db)
+
     rows = await run_query(
         """
         MATCH (s:Scan {id: $scan_id})-[:HAS_CHAIN]->(c:Chain)-[:USES_FINDING]->(f:Finding)

@@ -115,7 +115,7 @@ async def delete_target(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     target = await _get_target_or_404(target_id, current_user.org_id, db)
-    db.delete(target)
+    await db.delete(target)
     await db.commit()
 
 

@@ -64,7 +64,7 @@ async def _anthropic(prompt: str, system: str, model_tier: str) -> str:
         raise LLMError("ANTHROPIC_API_KEY not set")
 
     model = (
-        "claude-opus-4-8" if model_tier == "reasoning" else "claude-sonnet-4-6"
+        "claude-opus-5" if model_tier == "reasoning" else "claude-sonnet-5"
     )
 
     try:
