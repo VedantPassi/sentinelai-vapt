@@ -181,3 +181,27 @@
 - `backend/scanners/nmap_scanner.py`: `-T4 --host-timeout 90s` (fast single-host scans)
 - `backend/api/v1/compliance.py`: 4 em-dash literals → ASCII `-` (fpdf2 latin-1 crash)
 - `frontend/app/(dashboard)/targets/page.tsx`: role-gated Add target + Delete buttons
+
+---
+
+## Professional Code Review — All 14 Findings Fixed ✅ (2026-08-16, git HEAD cd7d870)
+
+| Finding | Severity | Fix | File(s) |
+|---------|----------|-----|---------|
+| Missing pip dependencies | P0 | requirements.txt rewritten with 18 pinned deps | `backend/requirements.txt` |
+| Validation index misalignment | P0 | `to_validate_indices` now used in `_validate_chunk`; chunk-relative→global mapping | `backend/agents/validation_agent.py` |
+| Missing await on db.delete | P0 | `await db.delete(target)` | `backend/api/v1/targets.py` |
+| Attack graph no org-scoping | P1 | `_assert_scan_org()` helper on all 3 endpoints | `backend/api/v1/attack_graph.py` |
+| WebSocket no auth check | P1 | Org membership verified before `websocket.accept()` | `backend/api/v1/agent_scans.py` |
+| nginx WS path never matched | P1 | `/api/v1/agent-scans/ws/` explicit location | `infra/nginx/nginx.conf` |
+| nginx health path 404 | P1 | `/api/v1/health` → `backend:8000/api/v1/health` | `infra/nginx/nginx.conf` |
+| Docker healthcheck path wrong | P1 | `curl … /api/v1/health` | `infra/docker/docker-compose.prod.yml` |
+| Viewer can launch scans | P2 | `Depends(require_analyst)` on POST /scans | `backend/api/v1/scans.py` |
+| Unverified target scannable | P2 | 422 if `not target.verified` | `backend/api/v1/scans.py` |
+| Nmap info → auto-FP | P2 | `severity="low"` | `backend/scanners/nmap_scanner.py` |
+| Pydantic v1 validators | P2 | `@field_validator` in auth.py + users.py | `backend/api/v1/auth.py`, `users.py` |
+| OIDC hardcoded authorize URL | P2 | Async `build_authorization_url` from discovery | `backend/core/oidc.py`, `auth.py` |
+| Stale model IDs | P3 | `claude-opus-5` / `claude-sonnet-5` | `backend/core/llm.py` |
+| Kafka never used | P3 | Removed Kafka + Zookeeper services | `infra/docker/docker-compose.yml` |
+| No DB rollback on error | P3 | `try/except rollback` in `get_db` | `backend/core/db.py` |
+| Redundant except clause | P3 | `except (LLMError, Exception)` → `except Exception` | `backend/api/v1/findings.py` |
