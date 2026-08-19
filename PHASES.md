@@ -201,8 +201,13 @@
 - Container scan (Trivy + LLM enrichment pipeline)
 
 **Known gaps (not blocking):**
-- ZAP not installed → web/API DAST always 0 findings
+- ZAP not installed → web/API DAST always 0 findings (`brew install --cask owasp-zap`)
 - Schedules + Users CRUD UI not walked through this session
+- Compliance PDF, findings confirm/FP/revalidate, Blast Radius tab — not UI-clicked yet (API verified)
+
+**Container scan verified:** `python:3.8-slim` → 400 findings, 3 chains, 940s ✅
+
+**Next session: start from findings UI actions → compliance PDF → schedules → users**
 
 ---
 
