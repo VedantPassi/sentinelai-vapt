@@ -122,7 +122,7 @@ async def _validate_chunk(
     data = json.loads(raw[start:end])
     for item in data:
         chunk_idx = item.get("id")
-        if chunk_idx is None or not (0 <= chunk_idx < len(to_validate_indices)):
+        if chunk_idx is None or not (0 <= offset + chunk_idx < len(to_validate_indices)):
             logger.warning("Validation response has out-of-range id: %s", chunk_idx)
             continue
         results_idx = to_validate_indices[offset + chunk_idx]
