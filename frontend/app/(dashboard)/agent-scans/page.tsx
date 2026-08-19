@@ -243,7 +243,7 @@ export default function AgentScansPage() {
   }
 
   async function pollUntilDone(scanId: string) {
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 120; i++) {
       await new Promise((r) => setTimeout(r, 3000));
       try {
         const scan = await getAgentScan(scanId);
