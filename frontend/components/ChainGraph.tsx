@@ -35,7 +35,9 @@ function buildElements(
     const finding = step.finding_id ? findingsById.get(step.finding_id) : undefined;
     const label = finding
       ? (finding.title.length > 40 ? finding.title.slice(0, 37) + "…" : finding.title)
-      : `Step ${step.step}`;
+      : (step.action && step.action.length > 0
+          ? (step.action.length > 40 ? step.action.slice(0, 37) + "…" : step.action)
+          : `Step ${step.step}`);
     const severity = finding?.severity ?? "info";
 
     elements.push({
