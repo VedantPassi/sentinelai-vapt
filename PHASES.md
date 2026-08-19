@@ -184,6 +184,28 @@
 
 ---
 
+## Session 29 — Manual Testing + Bug Fixes ✅ (2026-08-20, git HEAD 7b546f8)
+
+**Bugs found and fixed during manual E2E testing:**
+
+| Fix | Commit | File |
+|-----|--------|------|
+| `pollUntilDone` 90s timeout too short for network scans (~127s) → 6 min | `c9653af` | `frontend/app/(dashboard)/agent-scans/page.tsx` |
+| ChainGraph: step nodes with no finding show "Step N" for all → show action text | `9985aa3` | `frontend/components/ChainGraph.tsx` |
+| `validation_agent` bounds check `chunk_idx < len(...)` misses `offset` → IndexError on large scans | `7b546f8` | `backend/agents/validation_agent.py` |
+
+**Verified working:**
+- Login, RBAC, unverified target gate, target delete, Pydantic 422s
+- Network scan end-to-end (findings, attack chains, attack path graph)
+- Compliance PDF (SOC2 / ISO27001 / PCI-DSS)
+- Container scan (Trivy + LLM enrichment pipeline)
+
+**Known gaps (not blocking):**
+- ZAP not installed → web/API DAST always 0 findings
+- Schedules + Users CRUD UI not walked through this session
+
+---
+
 ## Professional Code Review — All 14 Findings Fixed ✅ (2026-08-16, git HEAD cd7d870)
 
 | Finding | Severity | Fix | File(s) |
