@@ -169,6 +169,7 @@ export default function AgentScansPage() {
   const [events, setEvents] = useState<ProgressEvent[]>([]);
   const [findings, setFindings] = useState<AgentFinding[]>([]);
   const [chains, setChains] = useState<AgentChain[]>([]);
+  const [allScans, setAllScans] = useState<AgentScan[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -181,10 +182,16 @@ export default function AgentScansPage() {
   useEffect(() => {
     listAgentScans()
       .then((scans) => {
+        setAllScans(scans);
         if (scans.length > 0 && !activeScan) {
           const latest = scans.find((s) => s.status === "completed") ?? scans[0];
           setActiveScan(latest);
-          if (latest.status === "completed") { loadFindings(latest.id); loadChains(latest.id); }
+          if (latest.status === "completed") {
+            loadFindings(latest.id);
+            loadChains(latest.id);
+          } else if (latest.status === "running" || latest.status === "pending") {
+            openWebSocket(latest.id);
+          }
         }
       })
       .catch(() => {});
@@ -200,6 +207,22 @@ export default function AgentScansPage() {
       loadChains(activeScan.id);
     }
   }, [activeScan?.status]);
+
+  async function switchScan(scanId: string) {
+    const scan = allScans.find((s) => s.id === scanId);
+    if (!scan) return;
+    wsRef.current?.close();
+    setEvents([]);
+    setFindings([]);
+    setChains([]);
+    setActiveScan(scan);
+    if (scan.status === "completed") {
+      loadFindings(scan.id);
+      loadChains(scan.id);
+    } else if (scan.status === "running" || scan.status === "pending") {
+      openWebSocket(scan.id);
+    }
+  }
 
   async function startScan() {
     if (!selectedTarget) { setError("Select a target first"); return; }
@@ -219,6 +242,7 @@ export default function AgentScansPage() {
         target_type: scanType,
       });
       setActiveScan(scan);
+      setAllScans((prev) => [scan, ...prev]);
       openWebSocket(scan.id);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to start scan");
@@ -243,7 +267,7 @@ export default function AgentScansPage() {
   }
 
   async function pollUntilDone(scanId: string) {
-    for (let i = 0; i < 120; i++) {
+    for (let i = 0; i < 600; i++) {
       await new Promise((r) => setTimeout(r, 3000));
       try {
         const scan = await getAgentScan(scanId);
@@ -330,9 +354,22 @@ export default function AgentScansPage() {
       {/* Active scan status */}
       {activeScan && (
         <div className="bg-white border rounded-lg p-5 space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-lg">Scan Progress</h2>
-            <span className={`text-sm font-medium ${STATUS_COLOR[activeScan.status] ?? ""}`}>
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="font-semibold text-lg shrink-0">Scan Progress</h2>
+            {allScans.length > 1 && (
+              <select
+                className="border rounded px-2 py-1 text-xs flex-1 max-w-xs"
+                value={activeScan.id}
+                onChange={(e) => switchScan(e.target.value)}
+              >
+                {allScans.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.status.toUpperCase()} — {s.id.slice(0, 8)}…
+                  </option>
+                ))}
+              </select>
+            )}
+            <span className={`text-sm font-medium shrink-0 ${STATUS_COLOR[activeScan.status] ?? ""}`}>
               {activeScan.status.toUpperCase()}
             </span>
           </div>
