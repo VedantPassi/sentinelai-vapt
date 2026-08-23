@@ -184,6 +184,20 @@
 
 ---
 
+## Session 30 — Auto-Refresh Fix + Scan History (2026-08-23, git HEAD 16ff16a)
+
+**Root cause of manual-refresh requirement found:**
+- Mount `useEffect` loaded running scan but never reconnected WS → stuck RUNNING forever on page revisit
+- Fix: reconnect WS on mount if scan is running/pending → auto-loads findings on completion
+- Scan history dropdown added → switch between past scans without re-running
+- `pollUntilDone` 6 min → 30 min (covers 15 min container scans)
+
+**DB cleared:** fresh start for next session testing
+
+**Not yet pushed to origin** — run `git push origin main` next session
+
+---
+
 ## Session 29 — Manual Testing + Bug Fixes ✅ (2026-08-20, git HEAD 7b546f8)
 
 **Bugs found and fixed during manual E2E testing:**
