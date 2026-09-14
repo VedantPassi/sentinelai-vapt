@@ -558,6 +558,82 @@ PATH="/opt/homebrew/bin:$PATH" PYTHONPATH=$(pwd) .venv/bin/celery -A workers.age
 
 ---
 
+**Session #:** 28
+**Date:** 2026-08-23
+**Phase:** Code Review + Hardening
+**What was done:**
+- Full code review (14 findings, all fixed, committed cd7d870, pushed origin/main)
+  - P0: requirements.txt 18 pinned deps, validation_agent index alignment fix, targets.py await db.delete
+  - P1: attack_graph org-scoping, agent_scans WS org-check, nginx WS+health paths, docker healthcheck
+  - P2: scans.py require_analyst + target.verified gate, nmap severity info→low, Pydantic v2 field_validator in auth/users, oidc.py async build_authorization_url
+  - P3: LLM models updated to claude-opus-5/claude-sonnet-5, Kafka removed from docker-compose.yml, get_db rollback, findings.py except cleanup
+**Decisions made:** Removed Kafka from compose (was orphan, never used in runtime)
+**Blockers:** None
+**Git HEAD:** cd7d870
+
+---
+
+**Session #:** 29
+**Date:** 2026-09-13
+**Phase:** Manual Testing + Bug Fixes
+**What was done:**
+- Fixed `pollUntilDone` timeout 90s → 6 min (120×3s) — network scans take ~127s (c9653af)
+- Fixed ChainGraph step node labels — `finding_id=null` steps showed "Step N" → now shows action text (9985aa3)
+- Fixed validation_agent bounds check — `chunk_idx` alone → `offset+chunk_idx` → IndexError on large container scans (7b546f8)
+- Manual test results: login ✅, RBAC ✅, unverified target blocked ✅, target delete ✅, network scan (2 findings, 2 chains, graph) ✅, compliance PDF ✅
+- Container scan (python:3.8-slim) verified → 400 findings, 3 chains, 940s (LLM bottleneck identified)
+- WS auto-reconnect fix: mount useEffect now calls openWebSocket() if latest scan is running/pending (16ff16a)
+- Scan history dropdown added (16ff16a)
+- pollUntilDone extended to 30 min (600×3s) for long container scans (16ff16a)
+- DB cleared (all scan_jobs/findings/attack_chains deleted for fresh start)
+**Decisions made:** pollUntilDone at 30 min covers container scans; DB cleared intentionally
+**Blockers:** ZAP not installed (web scans = 0 findings); live events silent during scan (astream only publishes after full node)
+**Git HEAD:** 16ff16a (pushed in session 30)
+
+---
+
+**Session #:** 30
+**Date:** 2026-09-14
+**Phase:** Live Events Fix + Container Scan Testing
+**What was done:**
+- Injected publish_scan_event_sync() calls inside agents for real-time progress:
+  - container_agent.py: before Trivy, after Trivy, before/after LLM enrichment (5 events) (c99052a)
+  - validation_agent.py: after each chunk of 10 findings (c99052a)
+  - chain_agent.py: before chain discovery, before LLM chain build (c99052a)
+- All use asdict(evt) — dict(ProgressEvent) fails (not iterable)
+- Removed Stop hook from .claude/settings.json (was auto-committing with generic message on session end)
+- Docker/Redis/Postgres confirmed up; Celery worker PIDs 13819/13823 confirmed alive
+- Launched container scan (python:3.8-slim); verified services up
+**Decisions made:** publish_scan_event_sync at key milestones inside agents (not just at node boundaries)
+**Blockers:** Live events still not appearing in UI terminal despite code fix — Celery worker had old code in memory (needed restart)
+**Git HEAD:** c99052a (docs: 908cc23)
+
+---
+
+**Session #:** 31
+**Date:** 2026-09-15
+**Phase:** Container Scan Validation Bypass + Verification
+**What was done:**
+- Restarted Celery worker with correct command to pick up new agent code
+- Diagnosed 90+ min container scan: validation_agent was running LLM on every CVE chunk (qwen2.5:7b local)
+  - python:3.8-slim → 400+ CVEs → 40+ Ollama calls × 3-5 min each = 2+ hr
+- Added container bypass in validation_agent.run(): if target_type=="container", skip _validate_all, auto-confirm all open findings (CVEs already CVSS-scored by Trivy) (43909c0)
+- Container scan result: 463 findings, 3 attack chains (Web to Container Exploitation, Container to Network Pivot, Secrets Exfiltration via Exploitable Library), compliance badges SOC2/ISO27001/PCI-DSS, attack graph 472 nodes/12 edges
+- Scan time: ~2 min (was 2+ hr)
+- Findings paginated: API default 50/page max 200 (backend/api/v1/agent_scans.py:151) — 463 in DB, 50 shown in UI (intentional, not a bug)
+- Committed + pushed 43909c0 to origin/main
+**Decisions made:** Container CVEs auto-confirmed (no LLM validation needed — CVSS scoring sufficient); Ollama stays for dev only; Claude API preferred for web scan LLM validation
+**Blockers:** Live events still silent in UI terminal — publish_scan_event_sync exists in code but events not reaching frontend (needs debug)
+**Next session should:**
+1. Debug live events: check Redis pub/sub channel, WS subscriber path, frontend event handler
+2. Findings pagination: "Load more" button or ?limit=200 in frontend
+3. Install ZAP: `brew install --cask owasp-zap` → enables web/API DAST findings
+4. Test: Confirm/FP/Re-validate finding buttons, Attack Path Graph Blast Radius tab, Compliance PDF downloads
+
+**Git HEAD:** 43909c0
+
+---
+
 ## End of Session Template
 
 ```
