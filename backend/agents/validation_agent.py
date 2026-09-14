@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import json
 import logging
+from dataclasses import asdict
 from datetime import datetime, timezone
 
 from agents.state import AgentState, ProgressEvent
+from core.events import publish_scan_event_sync
 from core.llm import LLMError, llm_complete
 from scanners.base import FindingData
 from scoring.classifier import classify_finding
@@ -56,7 +58,12 @@ async def run(state: AgentState) -> AgentState:
         _event("started", f"Validating {len(findings)} findings via LLM")
     )
 
-    validated = await _validate_all(findings, state["target_url"], state.get("target_type", "web"))
+    validated = await _validate_all(
+        findings,
+        state["target_url"],
+        state.get("target_type", "web"),
+        state.get("scan_id", ""),
+    )
     state["findings"] = validated
 
     confirmed = sum(1 for f in validated if f.status == "confirmed")
@@ -67,7 +74,12 @@ async def run(state: AgentState) -> AgentState:
     return state
 
 
-async def _validate_all(findings: list[FindingData], url: str, target_type: str = "web") -> list[FindingData]:
+async def _validate_all(
+    findings: list[FindingData],
+    url: str,
+    target_type: str = "web",
+    scan_id: str = "",
+) -> list[FindingData]:
     results = list(findings)
 
     # rules-based pre-filter — avoids LLM call for obvious noise
@@ -79,8 +91,9 @@ async def _validate_all(findings: list[FindingData], url: str, target_type: str 
 
     to_validate_indices = [i for i, fd in enumerate(results) if fd.status == "open"]
     llm_findings = [results[i] for i in to_validate_indices]
+    total_llm = len(llm_findings)
 
-    chunks = [llm_findings[i:i + _CHUNK_SIZE] for i in range(0, len(llm_findings), _CHUNK_SIZE)]
+    chunks = [llm_findings[i:i + _CHUNK_SIZE] for i in range(0, total_llm, _CHUNK_SIZE)]
     offset = 0
 
     for chunk in chunks:
@@ -89,6 +102,14 @@ async def _validate_all(findings: list[FindingData], url: str, target_type: str 
         except LLMError as exc:
             logger.warning("Validation LLM failed for chunk at offset %d: %s", offset, exc)
         offset += len(chunk)
+
+        # Publish real-time progress after each chunk so the terminal stays active
+        if scan_id and total_llm:
+            evt = _event(
+                "running",
+                f"Validated {min(offset, total_llm)}/{total_llm} findings…",
+            )
+            publish_scan_event_sync(scan_id, asdict(evt))
 
     return results
 

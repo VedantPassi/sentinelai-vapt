@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import json
 import logging
+from dataclasses import asdict
 from datetime import datetime, timezone
 
 from agents.state import AgentState, AttackChain, ChainStep, ProgressEvent
+from core.events import publish_scan_event_sync
 from core.llm import LLMError, llm_complete
 from scanners.base import FindingData
 
@@ -94,6 +96,7 @@ def _group_by_surface(findings: list[FindingData]) -> dict[str, list[FindingData
 
 async def run(state: AgentState) -> AgentState:
     state["current_node"] = "chain"
+    scan_id = state.get("scan_id", "")
 
     top = _select_findings(state.get("findings", []))
 
@@ -105,14 +108,15 @@ async def run(state: AgentState) -> AgentState:
 
     confirmed_count = sum(1 for f in top if f.status == "confirmed")
     open_count = len(top) - confirmed_count
-    state["progress_events"].append(
-        _event(
-            "started",
-            f"Chain discovery v2 — {len(top)} findings "
-            f"({confirmed_count} confirmed, {open_count} high-severity open) "
-            f"across {len(set(f.category for f in top))} surfaces",
-        )
+    chain_start_evt = _event(
+        "running",
+        f"Chain discovery v2 — {len(top)} findings "
+        f"({confirmed_count} confirmed, {open_count} high-severity open) "
+        f"across {len(set(f.category for f in top))} surfaces",
     )
+    state["progress_events"].append(chain_start_evt)
+    if scan_id:
+        publish_scan_event_sync(scan_id, asdict(chain_start_evt))
 
     grouped = _group_by_surface(top)
     surfaces = ", ".join(sorted(grouped.keys()))
@@ -142,6 +146,11 @@ async def run(state: AgentState) -> AgentState:
         surfaces=surfaces,
         findings_json=json.dumps(findings_by_surface, indent=2),
     )
+
+    llm_start_evt = _event("running", "Building attack chain graph with LLM…")
+    state["progress_events"].append(llm_start_evt)
+    if scan_id:
+        publish_scan_event_sync(scan_id, asdict(llm_start_evt))
 
     try:
         raw = await llm_complete(prompt, system=_SYSTEM, model_tier="reasoning")

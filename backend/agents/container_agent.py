@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import json
 import logging
+from dataclasses import asdict
 from datetime import datetime, timezone
 
 from agents.state import AgentState, ProgressEvent
+from core.events import publish_scan_event_sync
 from core.llm import LLMError, llm_complete
 from scanners.base import FindingData
 from scanners import trivy_scanner
@@ -46,24 +48,56 @@ def _event(status: str, message: str) -> ProgressEvent:
 
 async def run(state: AgentState) -> AgentState:
     state["current_node"] = "container"
+    scan_id = state.get("scan_id", "")
     state["progress_events"].append(_event("started", "Container agent starting"))
 
     image_ref = state["target_url"]
     config = state.get("config") or {}
 
-    state["progress_events"].append(_event("started", f"Running Trivy on {image_ref}"))
+    # Publish real-time event before Trivy starts (can take 10+ min)
+    trivy_start_evt = _event("running", f"Starting Trivy scan on {image_ref}…")
+    state["progress_events"].append(trivy_start_evt)
+    if scan_id:
+        publish_scan_event_sync(scan_id, asdict(trivy_start_evt))
+
     result = await trivy_scanner.run(image_ref, config)
 
     if result.error:
-        state["progress_events"].append(_event("failed", f"Trivy error: {result.error}"))
+        err_evt = _event("failed", f"Trivy error: {result.error}")
+        state["progress_events"].append(err_evt)
+        if scan_id:
+            publish_scan_event_sync(scan_id, asdict(err_evt))
         return state
 
     all_findings = result.findings
-    state["progress_events"].append(
-        _event("started", f"Trivy complete — {len(all_findings)} findings, enriching top CVEs with LLM")
+    critical_high = sum(1 for f in all_findings if f.severity in ("critical", "high"))
+
+    # Publish real-time event after Trivy finishes
+    trivy_done_evt = _event(
+        "running",
+        f"Trivy complete — {len(all_findings)} findings ({critical_high} critical/high)",
     )
+    state["progress_events"].append(trivy_done_evt)
+    if scan_id:
+        publish_scan_event_sync(scan_id, asdict(trivy_done_evt))
+
+    top_cve_count = min(
+        len([f for f in all_findings if f.severity in ("critical", "high") and f.raw.get("cve_id")]),
+        20,
+    )
+    if top_cve_count:
+        enrich_start_evt = _event("running", f"Enriching top {top_cve_count} CVEs with LLM…")
+        state["progress_events"].append(enrich_start_evt)
+        if scan_id:
+            publish_scan_event_sync(scan_id, asdict(enrich_start_evt))
 
     enriched_map = await _enrich_top_cves(all_findings, image_ref)
+
+    if top_cve_count:
+        enrich_done_evt = _event("running", "LLM enrichment done")
+        state["progress_events"].append(enrich_done_evt)
+        if scan_id:
+            publish_scan_event_sync(scan_id, asdict(enrich_done_evt))
 
     for f in all_findings:
         cve_id = f.raw.get("cve_id", "")
@@ -81,7 +115,7 @@ async def run(state: AgentState) -> AgentState:
         _event(
             "completed",
             f"Container agent done — {len(all_findings)} CVEs/misconfigs "
-            f"({sum(1 for f in all_findings if f.severity in ('critical', 'high'))} critical/high)",
+            f"({critical_high} critical/high)",
         )
     )
     return state
