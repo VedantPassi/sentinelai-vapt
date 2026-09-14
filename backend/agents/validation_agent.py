@@ -49,9 +49,22 @@ def _event(status: str, message: str) -> ProgressEvent:
 async def run(state: AgentState) -> AgentState:
     state["current_node"] = "validator"
     findings = state.get("findings", [])
+    target_type = state.get("target_type", "web")
 
     if not findings:
         state["progress_events"].append(_event("completed", "No findings to validate"))
+        return state
+
+    # Container CVEs are CVSS-scored by Trivy — skip LLM validation
+    if target_type == "container":
+        for f in findings:
+            if f.status == "open":
+                f.status = "confirmed"
+                f.validation_reasoning = "auto-confirmed: CVE with CVSS score"
+        confirmed = sum(1 for f in findings if f.status == "confirmed")
+        state["progress_events"].append(
+            _event("completed", f"Validation skipped for container scan — {confirmed} CVEs confirmed")
+        )
         return state
 
     state["progress_events"].append(
@@ -61,7 +74,7 @@ async def run(state: AgentState) -> AgentState:
     validated = await _validate_all(
         findings,
         state["target_url"],
-        state.get("target_type", "web"),
+        target_type,
         state.get("scan_id", ""),
     )
     state["findings"] = validated
