@@ -198,6 +198,23 @@
 
 ---
 
+## Session 31 — Live Progress Events Fix ✅ (2026-09-14, git HEAD c99052a)
+
+**Fix: terminal no longer goes silent during long scans**
+
+| Agent | Change | Effect |
+|-------|--------|--------|
+| container_agent.py | publish before/after Trivy + LLM enrichment | 4 live events during 15min scan |
+| validation_agent.py | publish after each 10-finding LLM chunk | 40 live events for 400-finding scan |
+| chain_agent.py | publish before LLM chain build | 1 live event before 1-2min LLM call |
+
+**Also fixed this session:**
+- Auto-refresh bug (session 30): mount useEffect reconnects WS if scan running → findings load automatically
+- Scan history dropdown added
+- Stop hook (auto-commit/push on session end) removed from project .claude/settings.json
+
+---
+
 ## Session 29 — Manual Testing + Bug Fixes ✅ (2026-08-20, git HEAD 7b546f8)
 
 **Bugs found and fixed during manual E2E testing:**
